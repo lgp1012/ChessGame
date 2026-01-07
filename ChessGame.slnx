@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="ChessGame/Server.csproj" Id="57653ca0-61c7-4f64-8e00-5549b731806f" />
+  <Project Path="Client/Client.csproj" Id="ba4e96e2-8e36-4c2e-8e43-b61654026840" />
+</Solution>
