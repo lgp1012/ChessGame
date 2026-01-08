@@ -38,6 +38,8 @@
             this.btnStartServer = new System.Windows.Forms.Button();
             this.btnStopMatch = new System.Windows.Forms.Button();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.btnEndServer = new System.Windows.Forms.Button();
+            this.btnStartMatch = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -53,7 +55,6 @@
             this.lblServerStatus.Size = new System.Drawing.Size(236, 27);
             this.lblServerStatus.TabIndex = 0;
             this.lblServerStatus.Text = "Server status: STOPPED";
-            this.lblServerStatus.Click += new System.EventHandler(this.lblServerStatus_Click);
             // 
             // NameGame
             // 
@@ -69,7 +70,6 @@
             this.NameGame.TabIndex = 1;
             this.NameGame.Text = "Chess Game";
             this.NameGame.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.NameGame.Click += new System.EventHandler(this.NameGame_Click);
             // 
             // clientList
             // 
@@ -78,7 +78,6 @@
             this.clientList.Name = "clientList";
             this.clientList.Size = new System.Drawing.Size(134, 43);
             this.clientList.TabIndex = 2;
-            this.clientList.SelectedIndexChanged += new System.EventHandler(this.clientList_SelectedIndexChanged);
             // 
             // lblConnectClient
             // 
@@ -108,12 +107,11 @@
             this.lblMatchStatus.AutoSize = true;
             this.lblMatchStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Italic, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblMatchStatus.ForeColor = System.Drawing.Color.Yellow;
-            this.lblMatchStatus.Location = new System.Drawing.Point(122, 185);
+            this.lblMatchStatus.Location = new System.Drawing.Point(95, 194);
             this.lblMatchStatus.Name = "lblMatchStatus";
             this.lblMatchStatus.Size = new System.Drawing.Size(229, 29);
             this.lblMatchStatus.TabIndex = 5;
             this.lblMatchStatus.Text = "Waiting for players...";
-            this.lblMatchStatus.Click += new System.EventHandler(this.lblMatchStatus_Click);
             // 
             // btnStartServer
             // 
@@ -121,12 +119,13 @@
             this.btnStartServer.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnStartServer.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnStartServer.ForeColor = System.Drawing.Color.Maroon;
-            this.btnStartServer.Location = new System.Drawing.Point(88, 226);
+            this.btnStartServer.Location = new System.Drawing.Point(17, 226);
             this.btnStartServer.Name = "btnStartServer";
             this.btnStartServer.Size = new System.Drawing.Size(93, 45);
             this.btnStartServer.TabIndex = 6;
             this.btnStartServer.Text = "Start Server";
             this.btnStartServer.UseVisualStyleBackColor = false;
+            this.btnStartServer.Click += new System.EventHandler(this.btnStartServer_Click);
             // 
             // btnStopMatch
             // 
@@ -134,7 +133,7 @@
             this.btnStopMatch.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btnStopMatch.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnStopMatch.ForeColor = System.Drawing.Color.Brown;
-            this.btnStopMatch.Location = new System.Drawing.Point(293, 226);
+            this.btnStopMatch.Location = new System.Drawing.Point(352, 226);
             this.btnStopMatch.Name = "btnStopMatch";
             this.btnStopMatch.Size = new System.Drawing.Size(93, 45);
             this.btnStopMatch.TabIndex = 7;
@@ -152,12 +151,43 @@
             this.pictureBox1.TabIndex = 8;
             this.pictureBox1.TabStop = false;
             // 
+            // btnEndServer
+            // 
+            this.btnEndServer.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
+            this.btnEndServer.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnEndServer.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnEndServer.ForeColor = System.Drawing.Color.Maroon;
+            this.btnEndServer.Location = new System.Drawing.Point(127, 226);
+            this.btnEndServer.Name = "btnEndServer";
+            this.btnEndServer.Size = new System.Drawing.Size(93, 45);
+            this.btnEndServer.TabIndex = 9;
+            this.btnEndServer.Text = "End Server";
+            this.btnEndServer.UseVisualStyleBackColor = false;
+            this.btnEndServer.Click += new System.EventHandler(this.btnEndServer_Click);
+            // 
+            // btnStartMatch
+            // 
+            this.btnStartMatch.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
+            this.btnStartMatch.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnStartMatch.Enabled = false;
+            this.btnStartMatch.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnStartMatch.ForeColor = System.Drawing.Color.Brown;
+            this.btnStartMatch.Location = new System.Drawing.Point(240, 226);
+            this.btnStartMatch.Name = "btnStartMatch";
+            this.btnStartMatch.Size = new System.Drawing.Size(93, 45);
+            this.btnStartMatch.TabIndex = 10;
+            this.btnStartMatch.Text = "Start Match";
+            this.btnStartMatch.UseVisualStyleBackColor = false;
+            this.btnStartMatch.Click += new System.EventHandler(this.btnStartMatch_Click);
+            // 
             // ServerForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.ClientSize = new System.Drawing.Size(468, 286);
+            this.Controls.Add(this.btnStartMatch);
+            this.Controls.Add(this.btnEndServer);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.btnStopMatch);
             this.Controls.Add(this.btnStartServer);
@@ -190,6 +220,8 @@
         private System.Windows.Forms.Button btnStartServer;
         private System.Windows.Forms.Button btnStopMatch;
         private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.Button btnEndServer;
+        private System.Windows.Forms.Button btnStartMatch;
     }
 }
 
