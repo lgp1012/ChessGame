@@ -6,7 +6,7 @@ using System.Windows.Forms;
 
 namespace Client
 {
-    internal static class Program
+    internal static class Client
     {
         /// <summary>
         /// The main entry point for the application.
@@ -16,7 +16,7 @@ namespace Client
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new ServerForm());
+            Application.Run(new ClientForm());
         }
     }
 }

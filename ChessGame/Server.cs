@@ -6,7 +6,7 @@ using System.Windows.Forms;
 
 namespace ChessGame
 {
-    internal static class Program
+    internal static class Server
     {
         /// <summary>
         /// The main entry point for the application.
@@ -16,7 +16,7 @@ namespace ChessGame
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new ClientForm());
+            Application.Run(new ServerForm());
         }
     }
 }
