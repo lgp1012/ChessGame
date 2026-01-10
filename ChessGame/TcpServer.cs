@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ChessGame
@@ -53,30 +54,40 @@ namespace ChessGame
             try
             {
                 isListening = false;
+                OnLogMessage?.Invoke("Server is shutting down...");
 
                 // Send disconnection message to all clients first
                 BroadcastCountdown("[SERVER] Server is shutting down. Connection will be closed.");
 
                 // Give clients a moment to receive the message
-                System.Threading.Thread.Sleep(100);
+                Thread.Sleep(200);
 
-                // Disconnect all clients
+                // Disconnect all clients and trigger events
+                List<ClientConnection> clientsToDisconnect = new List<ClientConnection>();
                 lock (connectedClients)
                 {
-                    foreach (var clientConn in connectedClients.Values)
-                    {
-                        try
-                        {
-                            clientConn.Writer?.Close();
-                            clientConn.Client?.Close();
-                        }
-                        catch { }
-                    }
+                    clientsToDisconnect.AddRange(connectedClients.Values);
                     connectedClients.Clear();
                 }
+
+                // Trigger disconnect event for each client
+                foreach (var clientConn in clientsToDisconnect)
+                {
+                    try
+                    {
+                        clientConn.Writer?.Close();
+                        clientConn.Client?.Close();
+                    }
+                    catch { }
+
+                    // Trigger the disconnect event to update UI
+                    OnClientDisconnected?.Invoke($"{clientConn.PlayerName}");
+                }
+
                 clientCount = 0;
 
-                tcpListener?.Stop();
+                // Close listener
+                try { tcpListener?.Stop(); } catch { }
                 OnLogMessage?.Invoke("Server stopped");
             }
             catch (Exception ex)
@@ -108,7 +119,10 @@ namespace ChessGame
                 }
                 catch (Exception ex)
                 {
-                    OnLogMessage?.Invoke($"Error accepting client: {ex.Message}");
+                    if (isListening)
+                    {
+                        OnLogMessage?.Invoke($"Error accepting client: {ex.Message}");
+                    }
                 }
             }
         }
@@ -117,14 +131,19 @@ namespace ChessGame
         {
             StreamWriter writer = null;
             StreamReader reader = null;
+            string playerName = null;
 
             try
             {
-                writer = new StreamWriter(client.GetStream(), Encoding.UTF8) { AutoFlush = true };
-                reader = new StreamReader(client.GetStream(), Encoding.UTF8);
+                client.NoDelay = true;
+                NetworkStream networkStream = client.GetStream();
+                networkStream.ReadTimeout = 5000;
+
+                writer = new StreamWriter(networkStream, Encoding.UTF8) { AutoFlush = true };
+                reader = new StreamReader(networkStream, Encoding.UTF8);
 
                 // Read player name from client
-                string playerName = await reader.ReadLineAsync();
+                playerName = await reader.ReadLineAsync();
                 if (playerName == null)
                 {
                     client.Close();
@@ -146,33 +165,48 @@ namespace ChessGame
                 }
 
                 OnClientConnected?.Invoke($"{playerName} ({clientIp})");
+                OnLogMessage?.Invoke($"{playerName} connected from {clientIp}");
 
                 // Listen for messages from client
                 string line;
                 while (isListening && (line = await reader.ReadLineAsync()) != null)
                 {
+                    // Check if client is disconnecting
+                    if (line.Contains("[CLIENT] Disconnecting"))
+                    {
+                        OnLogMessage?.Invoke($"{playerName} sent disconnect signal");
+                        break;
+                    }
+
                     OnLogMessage?.Invoke($"{playerName}: {line}");
-                    // Broadcast message to other clients if needed
                     BroadcastMessage($"{playerName}: {line}", clientId);
                 }
             }
             catch (Exception ex)
             {
-                OnLogMessage?.Invoke($"Error handling client {clientId}: {ex.Message}");
+                OnLogMessage?.Invoke($"Error handling client: {ex.Message}");
             }
             finally
             {
-                reader?.Close();
-                writer?.Close();
-                client?.Close();
+                // Close all resources
+                try { reader?.Dispose(); } catch { }
+                try { writer?.Dispose(); } catch { }
+                try { client?.Dispose(); } catch { }
 
+                // Remove from client list and notify
                 lock (connectedClients)
                 {
-                    if (connectedClients.TryGetValue(clientId, out var clientConn))
+                    if (connectedClients.TryGetValue(clientId, out var conn))
                     {
-                        OnClientDisconnected?.Invoke($"{clientConn.PlayerName}");
                         connectedClients.Remove(clientId);
+                        playerName = conn.PlayerName;
                     }
+                }
+
+                if (!string.IsNullOrEmpty(playerName))
+                {
+                    OnClientDisconnected?.Invoke($"{playerName}");
+                    OnLogMessage?.Invoke($"{playerName} disconnected. Total clients: {connectedClients.Count}");
                 }
             }
         }
@@ -186,21 +220,24 @@ namespace ChessGame
         }
 
         /// <summary>
-        /// Send countdown message to all connected clients
+        /// Send message to all connected clients
         /// </summary>
         public void BroadcastCountdown(string message)
         {
             lock (connectedClients)
             {
-                foreach (var clientConn in connectedClients.Values)
+                foreach (var clientConn in connectedClients.Values.ToList())
                 {
                     try
                     {
-                        clientConn.Writer?.WriteLine(message);
+                        if (clientConn.Writer != null)
+                        {
+                            clientConn.Writer.WriteLine(message);
+                        }
                     }
                     catch (Exception ex)
                     {
-                        OnLogMessage?.Invoke($"Error sending countdown to {clientConn.PlayerName}: {ex.Message}");
+                        OnLogMessage?.Invoke($"Error sending to {clientConn.PlayerName}: {ex.Message}");
                     }
                 }
             }
@@ -213,13 +250,16 @@ namespace ChessGame
         {
             lock (connectedClients)
             {
-                foreach (var kvp in connectedClients)
+                foreach (var kvp in connectedClients.ToList())
                 {
                     if (kvp.Key != senderId)
                     {
                         try
                         {
-                            kvp.Value.Writer?.WriteLine(message);
+                            if (kvp.Value.Writer != null)
+                            {
+                                kvp.Value.Writer.WriteLine(message);
+                            }
                         }
                         catch { }
                     }

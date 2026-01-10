@@ -108,6 +108,9 @@ namespace ChessGame
             if (tcpServer != null)
             {
                 tcpServer.Stop();
+                tcpServer.OnClientConnected -= TcpServer_OnClientConnected;
+                tcpServer.OnClientDisconnected -= TcpServer_OnClientDisconnected;
+                tcpServer.OnLogMessage -= TcpServer_OnLogMessage;
                 tcpServer = null;
             }
 

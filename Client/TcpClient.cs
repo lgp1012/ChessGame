@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Client
@@ -14,7 +15,8 @@ namespace Client
         private StreamReader reader;
         private bool isConnected = false;
 
-        private const string SERVER_IP = "192.168.100.2";  // Change to server IP if on different machine
+        // Server address - cố định
+        private const string SERVER_IP = "192.168.100.2";
         private const int SERVER_PORT = 5000;
 
         public event Action<string> OnMessageReceived;
@@ -35,8 +37,12 @@ namespace Client
             try
             {
                 tcpClient = new TcpClient();
+                tcpClient.NoDelay = true;  // Disable Nagle's algorithm for real-time communication
                 await tcpClient.ConnectAsync(SERVER_IP, SERVER_PORT);
+                
                 stream = tcpClient.GetStream();
+                stream.ReadTimeout = 5000;  // 5 second read timeout
+                
                 writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
                 isConnected = true;
 
@@ -52,6 +58,7 @@ namespace Client
             {
                 isConnected = false;
                 OnError?.Invoke($"Connection failed: {ex.Message}");
+                OnConnectionStatusChanged?.Invoke("Disconnected");
                 Disconnect();
             }
         }
@@ -65,6 +72,7 @@ namespace Client
             {
                 reader = new StreamReader(stream, Encoding.UTF8);
                 string line;
+                
                 while (isConnected && (line = await reader.ReadLineAsync()) != null)
                 {
                     // Check if server is shutting down
@@ -78,6 +86,12 @@ namespace Client
                     // Trigger event for received message
                     OnMessageReceived?.Invoke(line);
                 }
+
+                // If loop exits naturally (server closed connection)
+                if (isConnected)
+                {
+                    Disconnect();
+                }
             }
             catch (Exception ex)
             {
@@ -85,14 +99,14 @@ namespace Client
                 {
                     OnError?.Invoke($"Error receiving message: {ex.Message}");
                 }
-            }
-            finally
-            {
-                reader?.Dispose();
                 if (isConnected)
                 {
                     Disconnect();
                 }
+            }
+            finally
+            {
+                try { reader?.Dispose(); } catch { }
             }
         }
 
@@ -115,6 +129,10 @@ namespace Client
             catch (Exception ex)
             {
                 OnError?.Invoke($"Error sending message: {ex.Message}");
+                if (isConnected)
+                {
+                    Disconnect();
+                }
             }
         }
 
@@ -123,18 +141,33 @@ namespace Client
         /// </summary>
         public void Disconnect()
         {
+            if (!isConnected)
+                return;
+
+            isConnected = false;  // Set to false IMMEDIATELY to prevent race conditions
+
             try
             {
-                isConnected = false;
-                writer?.Close();
-                reader?.Close();
-                stream?.Close();
-                tcpClient?.Close();
-                OnConnectionStatusChanged?.Invoke("Disconnected");
+                // Try to send disconnect signal
+                if (writer != null)
+                {
+                    try
+                    {
+                        writer.WriteLine("[CLIENT] Disconnecting");
+                        writer.Flush();
+                        Thread.Sleep(50);  // Give server time to receive
+                    }
+                    catch { }
+                }
             }
-            catch (Exception ex)
+            finally
             {
-                OnError?.Invoke($"Error disconnecting: {ex.Message}");
+                try { writer?.Dispose(); } catch { }
+                try { reader?.Dispose(); } catch { }
+                try { stream?.Dispose(); } catch { }
+                try { tcpClient?.Dispose(); } catch { }
+
+                OnConnectionStatusChanged?.Invoke("Disconnected");
             }
         }
     }
