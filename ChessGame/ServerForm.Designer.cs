@@ -131,6 +131,7 @@
             // 
             this.btnStopMatch.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(192)))), ((int)(((byte)(192)))));
             this.btnStopMatch.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnStopMatch.Enabled = false;
             this.btnStopMatch.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnStopMatch.ForeColor = System.Drawing.Color.Brown;
             this.btnStopMatch.Location = new System.Drawing.Point(352, 226);

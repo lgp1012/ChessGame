@@ -16,7 +16,15 @@ namespace Client
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new ClientForm());
+
+            // Show player name input dialog first
+            PlayerNameForm playerNameForm = new PlayerNameForm();
+            if (playerNameForm.ShowDialog() == DialogResult.OK)
+            {
+                // If player entered name, show the main client form
+                Application.Run(new ClientForm(playerNameForm.PlayerName));
+            }
+            // If cancelled, exit application
         }
     }
 }

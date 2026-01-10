@@ -19,6 +19,12 @@ namespace ChessGame
         private System.Windows.Forms.Timer countdownTimer;
         private int countdownSeconds;
 
+        // New flag: true when a match has actually started (after countdown completes)
+        private bool matchStarted = false;
+
+        // TCP Server instance
+        private TcpServer tcpServer;
+
         public ServerForm()
         {
             InitializeComponent();
@@ -32,6 +38,16 @@ namespace ChessGame
             UpdateUI();
         }
 
+        void RemoveClient(string clientInfo)
+        {
+            if (clientList.Items.Contains(clientInfo))
+            {
+                clientList.Items.Remove(clientInfo);
+                connectedClients--;
+                UpdateUI();
+            }
+        }
+
         private void UpdateUI()
         {
             lblServerStatus.Text = serverRunning
@@ -41,18 +57,20 @@ namespace ChessGame
             lblConnectClient.Text = $"Connected clients: {connectedClients} / 2";
 
             btnStartMatch.Enabled = serverRunning && connectedClients == 2 && (countdownTimer == null || !countdownTimer.Enabled);
+
+            btnStopMatch.Enabled = matchStarted;
         }
 
 
         private void btnStopMatch_Click(object sender, EventArgs e)
         {
-            // Nếu bộ đếm đang trong giai đoạn đếm thì sẽ dừng lập tức
-            if (countdownTimer != null)
+            //Trận đấu chưa bắt đầu thì nút stop match này vẫn bị vô hiệu hóa
+            if (!matchStarted)
             {
-                countdownTimer.Stop();
-                countdownTimer.Dispose();
-                countdownTimer = null;
+                return;
             }
+
+            matchStarted = false;
 
             lblMatchStatus.Text = "Match paused by server";
             UpdateUI();
@@ -61,15 +79,24 @@ namespace ChessGame
         private void btnStartServer_Click(object sender, EventArgs e)
         {
             serverRunning = true;
+            matchStarted = false;
+            connectedClients = 0;
+            clientList.Items.Clear();
             lblMatchStatus.Text = "Waiting for players...";
-            AddClient("1");
-            AddClient("2");
+
+            // Start the TCP server to accept client connections
+            tcpServer = new TcpServer();
+            tcpServer.OnClientConnected += TcpServer_OnClientConnected;
+            tcpServer.OnClientDisconnected += TcpServer_OnClientDisconnected;
+            tcpServer.OnLogMessage += TcpServer_OnLogMessage;
+            tcpServer.Start();
+
             UpdateUI();
         }
 
         private void btnEndServer_Click(object sender, EventArgs e)
         {
-            // Nếu bộ đếm đang trong giai đoạn đếm thì sẽ dừng lập tức
+            // If a countdown timer is running, stop and dispose it
             if (countdownTimer != null)
             {
                 countdownTimer.Stop();
@@ -77,7 +104,15 @@ namespace ChessGame
                 countdownTimer = null;
             }
 
+            // Stop the TCP server
+            if (tcpServer != null)
+            {
+                tcpServer.Stop();
+                tcpServer = null;
+            }
+
             serverRunning = false;
+            matchStarted = false;
             connectedClients = 0;
             clientList.Items.Clear();
 
@@ -87,7 +122,7 @@ namespace ChessGame
 
         private void StartCountdown(int seconds)
         {
-            // Đảm bảo rằng không còn Timer trước đó được lưu trữ lại
+            // Ensure that any previous timer is cleared
             if (countdownTimer != null)
             {
                 countdownTimer.Stop();
@@ -95,8 +130,17 @@ namespace ChessGame
                 countdownTimer = null;
             }
 
+            // Starting a countdown implies the match is not yet started
+            matchStarted = false;
+
             countdownSeconds = seconds;
             lblMatchStatus.Text = $"Match starts in {countdownSeconds} seconds...";
+            
+            // Broadcast countdown to clients
+            if (tcpServer != null)
+            {
+                tcpServer.BroadcastCountdown($"Match starts in {countdownSeconds} seconds...");
+            }
 
             countdownTimer = new System.Windows.Forms.Timer();
             countdownTimer.Interval = 1000; // 1 second
@@ -106,15 +150,28 @@ namespace ChessGame
                 if (countdownSeconds > 0)
                 {
                     lblMatchStatus.Text = $"Match starts in {countdownSeconds} seconds...";
+                    // Send updated countdown to clients
+                    if (tcpServer != null)
+                    {
+                        tcpServer.BroadcastCountdown($"Match starts in {countdownSeconds} seconds...");
+                    }
                 }
                 else
                 {
-                    // Quá trình đếm ngược hoàn tất thì xóa bộ đếm Timer
+                    // Countdown finished -> mark match as started and clear timer
                     countdownTimer.Stop();
                     countdownTimer.Dispose();
                     countdownTimer = null;
 
+                    matchStarted = true;
                     lblMatchStatus.Text = "Match started!";
+                    
+                    // Send match started message to clients
+                    if (tcpServer != null)
+                    {
+                        tcpServer.BroadcastCountdown("Match started!");
+                    }
+                    
                     UpdateUI();
                 }
             };
@@ -134,6 +191,38 @@ namespace ChessGame
             }
         }
 
-        
+        // Event handlers for TCP server
+        private void TcpServer_OnClientConnected(string clientInfo)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => TcpServer_OnClientConnected(clientInfo)));
+                return;
+            }
+
+            AddClient(clientInfo);
+        }
+
+        private void TcpServer_OnClientDisconnected(string clientInfo)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => TcpServer_OnClientDisconnected(clientInfo)));
+                return;
+            }
+
+            RemoveClient(clientInfo);
+        }
+
+        private void TcpServer_OnLogMessage(string message)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => TcpServer_OnLogMessage(message)));
+                return;
+            }
+
+            System.Diagnostics.Debug.WriteLine($"[TCP Server] {message}");
+        }
     }
 }
