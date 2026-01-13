@@ -16,7 +16,7 @@ namespace Client
         private bool isConnected = false;
 
         // Server address - cố định
-        private const string SERVER_IP = "192.168.100.2";
+        private const string SERVER_IP = "192.168.80.1";
         private const int SERVER_PORT = 5000;
 
         public event Action<string> OnMessageReceived;
