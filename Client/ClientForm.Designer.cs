@@ -24,16 +24,6 @@
             this.lblTitle = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
-            // lblTitle
-            // 
-            this.lblTitle.AutoSize = true;
-            this.lblTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblTitle.Location = new System.Drawing.Point(12, 9);
-            this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(170, 24);
-            this.lblTitle.TabIndex = 0;
-            this.lblTitle.Text = "Chess Game Client";
-            // 
             // lblStatus
             // 
             this.lblStatus.AutoSize = true;
@@ -41,7 +31,7 @@
             this.lblStatus.ForeColor = System.Drawing.Color.Red;
             this.lblStatus.Location = new System.Drawing.Point(12, 40);
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(120, 17);
+            this.lblStatus.Size = new System.Drawing.Size(142, 17);
             this.lblStatus.TabIndex = 1;
             this.lblStatus.Text = "Status: Disconnected";
             // 
@@ -65,14 +55,6 @@
             this.btnDisconnect.UseVisualStyleBackColor = true;
             this.btnDisconnect.Click += new System.EventHandler(this.btnDisconnect_Click);
             // 
-            // lstMessages
-            // 
-            this.lstMessages.FormattingEnabled = true;
-            this.lstMessages.Location = new System.Drawing.Point(15, 110);
-            this.lstMessages.Name = "lstMessages";
-            this.lstMessages.Size = new System.Drawing.Size(570, 225);
-            this.lstMessages.TabIndex = 4;
-            // 
             // txtMessage
             // 
             this.txtMessage.Location = new System.Drawing.Point(15, 345);
@@ -89,6 +71,24 @@
             this.btnSend.Text = "Send";
             this.btnSend.UseVisualStyleBackColor = true;
             this.btnSend.Click += new System.EventHandler(this.btnSend_Click);
+            // 
+            // lstMessages
+            // 
+            this.lstMessages.FormattingEnabled = true;
+            this.lstMessages.Location = new System.Drawing.Point(15, 110);
+            this.lstMessages.Name = "lstMessages";
+            this.lstMessages.Size = new System.Drawing.Size(570, 225);
+            this.lstMessages.TabIndex = 4;
+            // 
+            // lblTitle
+            // 
+            this.lblTitle.AutoSize = true;
+            this.lblTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblTitle.Location = new System.Drawing.Point(12, 9);
+            this.lblTitle.Name = "lblTitle";
+            this.lblTitle.Size = new System.Drawing.Size(188, 24);
+            this.lblTitle.TabIndex = 0;
+            this.lblTitle.Text = "Chess Game Client";
             // 
             // ClientForm
             // 
@@ -107,6 +107,7 @@
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.ClientForm_FormClosing);
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
 

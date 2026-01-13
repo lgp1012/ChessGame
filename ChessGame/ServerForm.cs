@@ -25,34 +25,78 @@ namespace ChessGame
         // TCP Server instance
         private TcpServer tcpServer;
 
+        // Dictionary to track clients by name
+        private Dictionary<string, string> clientList = new Dictionary<string, string>();
+
         public ServerForm()
         {
             InitializeComponent();
             UpdateUI();
         }
 
-        void AddClient(string clientInfo)
+        void AddClient(string playerName, string clientIp)
         {
-            clientList.Items.Add(clientInfo);
-            connectedClients++;
-            UpdateUI();
+            // Extract just the player name (remove IP part if it exists)
+            string displayName = playerName.Contains("(") ? playerName.Substring(0, playerName.IndexOf("(")).Trim() : playerName;
+            string clientKey = displayName;
+
+            // Add to dictionary and listbox with timestamp and IP
+            string timestamp = DateTime.Now.ToString("HH:mm:ss");
+            string displayText = $"[{timestamp}] {displayName} connected from {clientIp}";
+
+            lock (clientList)
+            {
+                if (!clientList.ContainsKey(clientKey))
+                {
+                    clientList[clientKey] = clientIp;
+                    msgServer.Items.Add(displayText);
+                    connectedClients++;
+                    UpdateUI();
+                }
+            }
         }
 
         void RemoveClient(string clientInfo)
         {
-            if (clientList.Items.Contains(clientInfo))
+            // Extract just the player name (remove IP part if it exists)
+            string playerName = clientInfo.Contains("(") ? clientInfo.Substring(0, clientInfo.IndexOf("(")).Trim() : clientInfo;
+
+            lock (clientList)
             {
-                clientList.Items.Remove(clientInfo);
-                connectedClients--;
-                UpdateUI();
+                if (clientList.ContainsKey(playerName))
+                {
+                    clientList.Remove(playerName);
+                    
+                    // Add disconnect message to msgServer
+                    string timestamp = DateTime.Now.ToString("HH:mm:ss");
+                    string displayText = $"[{timestamp}] {playerName} disconnected";
+                    msgServer.Items.Add(displayText);
+
+                    connectedClients--;
+                    UpdateUI();
+                }
             }
         }
 
         private void UpdateUI()
         {
-            lblServerStatus.Text = serverRunning
-            ? "Server status: RUNNING"
-            : "Server status: STOPPED";
+            // Update server status with color
+            if (serverRunning)
+            {
+                lblServerStatus.Text = "Server status: RUNNING";
+                lblServerStatus.ForeColor = Color.Green;  // Green when running
+                lblServerStatus.BackColor = Color.White;
+                btnStartServer.Enabled = false;  // Disable Start button when running
+                btnEndServer.Enabled = true;     // Enable End button when running
+            }
+            else
+            {
+                lblServerStatus.Text = "Server status: STOPPED";
+                lblServerStatus.ForeColor = Color.Red;    // Red when stopped
+                lblServerStatus.BackColor = Color.White;
+                btnStartServer.Enabled = true;   // Enable Start button when stopped
+                btnEndServer.Enabled = false;    // Disable End button when stopped
+            }
 
             lblConnectClient.Text = $"Connected clients: {connectedClients} / 2";
 
@@ -61,17 +105,14 @@ namespace ChessGame
             btnStopMatch.Enabled = matchStarted;
         }
 
-
         private void btnStopMatch_Click(object sender, EventArgs e)
         {
-            //Trận đấu chưa bắt đầu thì nút stop match này vẫn bị vô hiệu hóa
             if (!matchStarted)
             {
                 return;
             }
 
             matchStarted = false;
-
             lblMatchStatus.Text = "Match paused by server";
             UpdateUI();
         }
@@ -81,7 +122,8 @@ namespace ChessGame
             serverRunning = true;
             matchStarted = false;
             connectedClients = 0;
-            clientList.Items.Clear();
+            clientList.Clear();
+            msgServer.Items.Clear();
             lblMatchStatus.Text = "Waiting for players...";
 
             // Start the TCP server to accept client connections
@@ -90,6 +132,9 @@ namespace ChessGame
             tcpServer.OnClientDisconnected += TcpServer_OnClientDisconnected;
             tcpServer.OnLogMessage += TcpServer_OnLogMessage;
             tcpServer.Start();
+
+            // Add server started message
+            msgServer.Items.Add($"[{DateTime.Now:HH:mm:ss}] Server started");
 
             UpdateUI();
         }
@@ -117,7 +162,9 @@ namespace ChessGame
             serverRunning = false;
             matchStarted = false;
             connectedClients = 0;
-            clientList.Items.Clear();
+            clientList.Clear();
+            msgServer.Items.Clear();
+            msgServer.Items.Add($"[{DateTime.Now:HH:mm:ss}] Server stopped");
 
             lblMatchStatus.Text = "Server stopped";
             UpdateUI();
@@ -144,6 +191,9 @@ namespace ChessGame
             {
                 tcpServer.BroadcastCountdown($"Match starts in {countdownSeconds} seconds...");
             }
+
+            // Log to msgServer
+            msgServer.Items.Add($"[{DateTime.Now:HH:mm:ss}] Match countdown started");
 
             countdownTimer = new System.Windows.Forms.Timer();
             countdownTimer.Interval = 1000; // 1 second
@@ -174,6 +224,8 @@ namespace ChessGame
                     {
                         tcpServer.BroadcastCountdown("Match started!");
                     }
+
+                    msgServer.Items.Add($"[{DateTime.Now:HH:mm:ss}] Match started!");
                     
                     UpdateUI();
                 }
@@ -203,7 +255,12 @@ namespace ChessGame
                 return;
             }
 
-            AddClient(clientInfo);
+            // Extract player name and IP
+            // clientInfo format: "PlayerName (IP)"
+            string playerName = clientInfo.Contains("(") ? clientInfo.Substring(0, clientInfo.IndexOf("(")).Trim() : clientInfo;
+            string clientIp = clientInfo.Contains("(") ? clientInfo.Substring(clientInfo.IndexOf("(") + 1, clientInfo.IndexOf(")") - clientInfo.IndexOf("(") - 1) : "";
+
+            AddClient(playerName, clientIp);
         }
 
         private void TcpServer_OnClientDisconnected(string clientInfo)
@@ -226,6 +283,11 @@ namespace ChessGame
             }
 
             System.Diagnostics.Debug.WriteLine($"[TCP Server] {message}");
+        }
+
+        private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }
