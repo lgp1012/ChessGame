@@ -41,7 +41,7 @@
             this.lblTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblTitle.Location = new System.Drawing.Point(13, 13);
             this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(193, 24);
+            this.lblTitle.Size = new System.Drawing.Size(200, 24);
             this.lblTitle.TabIndex = 0;
             this.lblTitle.Text = "Chess Game - Login";
             // 
@@ -51,7 +51,7 @@
             this.lblPlayerName.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblPlayerName.Location = new System.Drawing.Point(13, 50);
             this.lblPlayerName.Name = "lblPlayerName";
-            this.lblPlayerName.Size = new System.Drawing.Size(82, 17);
+            this.lblPlayerName.Size = new System.Drawing.Size(93, 17);
             this.lblPlayerName.TabIndex = 1;
             this.lblPlayerName.Text = "Player Name:";
             // 
@@ -75,6 +75,7 @@
             this.btnOK.Text = "OK";
             this.btnOK.UseVisualStyleBackColor = false;
             this.btnOK.Click += new System.EventHandler(this.btnOK_Click);
+            this.btnOK.Enter += new System.EventHandler(this.btnOK_Click);
             // 
             // btnCancel
             // 
@@ -100,10 +101,11 @@
             this.Controls.Add(this.lblPlayerName);
             this.Controls.Add(this.lblTitle);
             this.Name = "PlayerNameForm";
-            this.Text = "Chess Game";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.Text = "Chess Game";
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
         #endregion

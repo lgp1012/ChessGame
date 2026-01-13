@@ -32,6 +32,10 @@ namespace Client
             tcpConnection.OnMessageReceived += TcpConnection_OnMessageReceived;
             tcpConnection.OnConnectionStatusChanged += TcpConnection_OnConnectionStatusChanged;
             tcpConnection.OnError += TcpConnection_OnError;
+
+            // Initialize button states
+            btnDisconnect.Enabled = false;
+            btnConnect.Enabled = true;
         }
 
         private void TcpConnection_OnMessageReceived(string message)
@@ -55,7 +59,7 @@ namespace Client
             {
                 btnConnect.Enabled = false;
                 await tcpConnection.ConnectAsync(playerName);
-                btnConnect.Enabled = true;
+                // btnConnect will be re-enabled by UpdateUI when connection state changes
             }
         }
 
@@ -68,6 +72,7 @@ namespace Client
         private void DisconnectFromServer()
         {
             tcpConnection.Disconnect();
+            // btnDisconnect will be disabled by UpdateUI when disconnected
         }
 
         private void UpdateUI(string message)
@@ -78,8 +83,16 @@ namespace Client
                 return;
             }
 
-            // Update status label
-            lblStatus.Text = $"Status: {(tcpConnection.IsConnected ? "Connected" : "Disconnected")}";
+            // Update status label text and color
+            bool connected = tcpConnection != null && tcpConnection.IsConnected;
+            lblStatus.Text = $"Status: {(connected ? "Connected" : "Disconnected")}";
+            lblStatus.ForeColor = connected ? Color.Green : Color.Red;
+
+            // Enable/disable Connect/Disconnect buttons based on connection state
+            btnConnect.Enabled = !connected;
+            btnDisconnect.Enabled = connected;
+
+            // Append log/message
             lstMessages.Items.Add($"[{DateTime.Now:HH:mm:ss}] {message}");
             lstMessages.TopIndex = lstMessages.Items.Count - 1;
         }
