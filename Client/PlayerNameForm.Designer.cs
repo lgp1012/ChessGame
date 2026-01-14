@@ -31,6 +31,8 @@
             this.lblTitle = new System.Windows.Forms.Label();
             this.lblPlayerName = new System.Windows.Forms.Label();
             this.txtPlayerName = new System.Windows.Forms.TextBox();
+            this.lblServerIP = new System.Windows.Forms.Label();
+            this.txtServerIP = new System.Windows.Forms.TextBox();
             this.btnOK = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.SuspendLayout();
@@ -63,29 +65,46 @@
             this.txtPlayerName.Size = new System.Drawing.Size(260, 23);
             this.txtPlayerName.TabIndex = 2;
             // 
+            // lblServerIP
+            // 
+            this.lblServerIP.AutoSize = true;
+            this.lblServerIP.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblServerIP.Location = new System.Drawing.Point(13, 100);
+            this.lblServerIP.Name = "lblServerIP";
+            this.lblServerIP.Size = new System.Drawing.Size(70, 17);
+            this.lblServerIP.TabIndex = 3;
+            this.lblServerIP.Text = "Server IP:";
+            // 
+            // txtServerIP
+            // 
+            this.txtServerIP.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtServerIP.Location = new System.Drawing.Point(13, 120);
+            this.txtServerIP.Name = "txtServerIP";
+            this.txtServerIP.Size = new System.Drawing.Size(260, 23);
+            this.txtServerIP.TabIndex = 4;
+            // 
             // btnOK
             // 
             this.btnOK.BackColor = System.Drawing.Color.Green;
             this.btnOK.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnOK.ForeColor = System.Drawing.Color.White;
-            this.btnOK.Location = new System.Drawing.Point(70, 110);
+            this.btnOK.Location = new System.Drawing.Point(70, 160);
             this.btnOK.Name = "btnOK";
             this.btnOK.Size = new System.Drawing.Size(75, 30);
-            this.btnOK.TabIndex = 3;
+            this.btnOK.TabIndex = 5;
             this.btnOK.Text = "OK";
             this.btnOK.UseVisualStyleBackColor = false;
             this.btnOK.Click += new System.EventHandler(this.btnOK_Click);
-            this.btnOK.Enter += new System.EventHandler(this.btnOK_Click);
             // 
             // btnCancel
             // 
             this.btnCancel.BackColor = System.Drawing.Color.Red;
             this.btnCancel.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnCancel.ForeColor = System.Drawing.Color.White;
-            this.btnCancel.Location = new System.Drawing.Point(150, 110);
+            this.btnCancel.Location = new System.Drawing.Point(151, 160);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(75, 30);
-            this.btnCancel.TabIndex = 4;
+            this.btnCancel.TabIndex = 6;
             this.btnCancel.Text = "Cancel";
             this.btnCancel.UseVisualStyleBackColor = false;
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
@@ -94,9 +113,11 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(285, 155);
+            this.ClientSize = new System.Drawing.Size(285, 205);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.btnOK);
+            this.Controls.Add(this.txtServerIP);
+            this.Controls.Add(this.lblServerIP);
             this.Controls.Add(this.txtPlayerName);
             this.Controls.Add(this.lblPlayerName);
             this.Controls.Add(this.lblTitle);
@@ -113,6 +134,8 @@
         private System.Windows.Forms.Label lblTitle;
         private System.Windows.Forms.Label lblPlayerName;
         private System.Windows.Forms.TextBox txtPlayerName;
+        private System.Windows.Forms.Label lblServerIP;
+        private System.Windows.Forms.TextBox txtServerIP;
         private System.Windows.Forms.Button btnOK;
         private System.Windows.Forms.Button btnCancel;
     }

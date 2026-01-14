@@ -15,8 +15,8 @@ namespace Client
         private StreamReader reader;
         private bool isConnected = false;
 
-        // Server address - cố định
-        private const string SERVER_IP = "172.20.10.3";
+        // Server address - bắt buộc phải nhập
+        private string serverIP;
         private const int SERVER_PORT = 5000;
 
         public event Action<string> OnMessageReceived;
@@ -25,8 +25,15 @@ namespace Client
 
         public bool IsConnected => isConnected;
 
-        public TcpClientConnection()
+        /// <summary>
+        /// Constructor - IP server bắt buộc phải cung cấp
+        /// </summary>
+        public TcpClientConnection(string ip)
         {
+            if (string.IsNullOrWhiteSpace(ip))
+                throw new ArgumentException("Server IP không được để trống");
+            
+            serverIP = ip;
         }
 
         /// <summary>
@@ -37,11 +44,11 @@ namespace Client
             try
             {
                 tcpClient = new TcpClient();
-                tcpClient.NoDelay = true;  // Disable Nagle's algorithm for real-time communication
-                await tcpClient.ConnectAsync(SERVER_IP, SERVER_PORT);
+                tcpClient.NoDelay = true;
+                await tcpClient.ConnectAsync(serverIP, SERVER_PORT);
                 
                 stream = tcpClient.GetStream();
-                stream.ReadTimeout = 5000;  // 5 second read timeout
+                stream.ReadTimeout = 5000;
                 
                 writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
                 isConnected = true;
@@ -144,7 +151,7 @@ namespace Client
             if (!isConnected)
                 return;
 
-            isConnected = false;  // Set to false IMMEDIATELY to prevent race conditions
+            isConnected = false;
 
             try
             {
@@ -155,7 +162,7 @@ namespace Client
                     {
                         writer.WriteLine("[CLIENT] Disconnecting");
                         writer.Flush();
-                        Thread.Sleep(50);  // Give server time to receive
+                        Thread.Sleep(50);
                     }
                     catch { }
                 }

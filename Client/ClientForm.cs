@@ -14,11 +14,14 @@ namespace Client
     {
         private TcpClientConnection tcpConnection;
         private string playerName;
+        private string serverIP;
 
-        public ClientForm(string name = "")
+        // Constructor bắt buộc nhận playerName và serverIP
+        public ClientForm(string name, string ip)
         {
             InitializeComponent();
             playerName = name;
+            serverIP = ip;
             
             // Update title with player name
             if (!string.IsNullOrEmpty(playerName))
@@ -27,8 +30,8 @@ namespace Client
                 lblTitle.Text = $"Chess Game Client - {playerName}";
             }
 
-            // Initialize TCP connection
-            tcpConnection = new TcpClientConnection();
+            // Initialize TCP connection với server IP
+            tcpConnection = new TcpClientConnection(serverIP);
             tcpConnection.OnMessageReceived += TcpConnection_OnMessageReceived;
             tcpConnection.OnConnectionStatusChanged += TcpConnection_OnConnectionStatusChanged;
             tcpConnection.OnError += TcpConnection_OnError;
@@ -59,7 +62,6 @@ namespace Client
             {
                 btnConnect.Enabled = false;
                 await tcpConnection.ConnectAsync(playerName);
-                // btnConnect will be re-enabled by UpdateUI when connection state changes
             }
         }
 
@@ -72,7 +74,6 @@ namespace Client
         private void DisconnectFromServer()
         {
             tcpConnection.Disconnect();
-            // btnDisconnect will be disabled by UpdateUI when disconnected
         }
 
         private void UpdateUI(string message)

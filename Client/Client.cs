@@ -17,12 +17,12 @@ namespace Client
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            // Show player name input dialog first
+            // Show player name and server IP input dialog first
             PlayerNameForm playerNameForm = new PlayerNameForm();
             if (playerNameForm.ShowDialog() == DialogResult.OK)
             {
-                // If player entered name, show the main client form
-                Application.Run(new ClientForm(playerNameForm.PlayerName));
+                // If player entered name and server IP, show the main client form
+                Application.Run(new ClientForm(playerNameForm.PlayerName, playerNameForm.ServerIP));
             }
             // If cancelled, exit application
         }
