@@ -289,55 +289,72 @@ namespace Client
 
             try
             {
+                // Handle CHECKMATE message
+                if (message == "[CHECKMATE]")
+                {
+                    MessageBox.Show("Đối thủ đã chiếu bí bạn!", "Game Over", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                
                 // Parse message: "[MOVE]r1,c1->r2,c2"
-                string moveData = message.StartsWith("[MOVE]") ? message.Substring(6) : message;
+                if (!message.StartsWith("[MOVE]"))
+                {
+                    // Ignore unknown messages
+                    return;
+                }
+                
+                string moveData = message.Substring(6);
                 
                 // Parse move: "r1,c1->r2,c2"
                 string[] parts = moveData.Split(new[] { "->" }, StringSplitOptions.None);
-                if (parts.Length == 2)
+                if (parts.Length != 2)
                 {
-                    string[] from = parts[0].Split(',');
-                    string[] to = parts[1].Split(',');
-                    
-                    int r1 = int.Parse(from[0]);
-                    int c1 = int.Parse(from[1]);
-                    int r2 = int.Parse(to[0]);
-                    int c2 = int.Parse(to[1]);
-                    
-                    // Validate opponent's move before accepting it
-                    PieceColor opponentColor = (playerColor == PieceColor.White) ? PieceColor.Black : PieceColor.White;
-                    ChessPiece movingPiece = chessBoard.GetPiece(r1, c1);
-                    
-                    if (movingPiece == null || movingPiece.Color != opponentColor)
-                    {
-                        MessageBox.Show("Invalid move received from opponent (wrong piece)", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
-                    
-                    if (!chessBoard.IsValidMoveSafe(r1, c1, r2, c2))
-                    {
-                        MessageBox.Show("Invalid move received from opponent (illegal move)", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
-                    
-                    // Thực hiện nước đi của đối thủ
-                    chessBoard.MovePiece(r1, c1, r2, c2);
-                    UpdateBoardDisplay();
-                    
-                    // Đổi lượt
-                    isMyTurn = true;
-                    UpdateTurnDisplay();
-                    
-                    // Kiểm tra chiếu bí
-                    if (chessBoard.IsCheckmate(playerColor))
-                    {
-                        MessageBox.Show("Checkmate! Bạn đã thua!", "Game Over", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
+                    MessageBox.Show("Invalid move format received", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
                 }
-                // Handle CHECKMATE message
-                else if (message == "[CHECKMATE]")
+                
+                string[] from = parts[0].Split(',');
+                string[] to = parts[1].Split(',');
+                
+                if (from.Length != 2 || to.Length != 2)
                 {
-                    MessageBox.Show("Đối thủ đã chiếu bí bạn!", "Game Over", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Invalid move format received", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                
+                int r1 = int.Parse(from[0]);
+                int c1 = int.Parse(from[1]);
+                int r2 = int.Parse(to[0]);
+                int c2 = int.Parse(to[1]);
+                
+                // Validate opponent's move before accepting it
+                PieceColor opponentColor = (playerColor == PieceColor.White) ? PieceColor.Black : PieceColor.White;
+                ChessPiece movingPiece = chessBoard.GetPiece(r1, c1);
+                
+                if (movingPiece == null || movingPiece.Color != opponentColor)
+                {
+                    MessageBox.Show("Invalid move received from opponent (wrong piece)", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                
+                if (!chessBoard.IsValidMoveSafe(r1, c1, r2, c2))
+                {
+                    MessageBox.Show("Invalid move received from opponent (illegal move)", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                
+                // Thực hiện nước đi của đối thủ
+                chessBoard.MovePiece(r1, c1, r2, c2);
+                UpdateBoardDisplay();
+                
+                // Đổi lượt
+                isMyTurn = true;
+                UpdateTurnDisplay();
+                
+                // Kiểm tra chiếu bí
+                if (chessBoard.IsCheckmate(playerColor))
+                {
+                    MessageBox.Show("Checkmate! Bạn đã thua!", "Game Over", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
             catch (Exception ex)
