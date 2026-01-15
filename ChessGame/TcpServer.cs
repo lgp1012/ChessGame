@@ -173,8 +173,7 @@ namespace ChessGame
                 OnClientConnected?.Invoke($"{playerName} ({clientIp})");
                 OnLogMessage?.Invoke($"{playerName} connected from {clientIp}");
                 
-                // Khi có 2 client, gán màu nhưng KHÔNG tự động bắt đầu match
-                AssignColors();
+                // Colors will be assigned when StartMatch() is called after countdown
 
                 // Listen for messages from client
                 string line;
@@ -342,6 +341,7 @@ namespace ChessGame
         
         /// <summary>
         /// Bắt đầu match - được gọi từ ServerForm khi admin nhấn Start Match
+        /// Gửi [OPPONENT] messages để trigger clients mở chess form
         /// </summary>
         public void StartMatch()
         {
@@ -350,7 +350,19 @@ namespace ChessGame
                 if (connectedClients.Count == 2)
                 {
                     var clients = connectedClients.Values.ToList();
-                    OnLogMessage?.Invoke("Match started between " + clients[0].PlayerName + " and " + clients[1].PlayerName);
+                    
+                    try
+                    {
+                        // Gửi [OPPONENT] cho cả 2 client để bắt đầu game
+                        clients[0].Writer.WriteLine("[OPPONENT]|" + clients[1].PlayerName + "|WHITE");
+                        clients[1].Writer.WriteLine("[OPPONENT]|" + clients[0].PlayerName + "|BLACK");
+                        
+                        OnLogMessage?.Invoke("Match started: " + clients[0].PlayerName + " (WHITE) vs " + clients[1].PlayerName + " (BLACK)");
+                    }
+                    catch (Exception ex)
+                    {
+                        OnLogMessage?.Invoke($"Error starting match: {ex.Message}");
+                    }
                 }
             }
         }

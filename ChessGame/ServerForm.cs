@@ -224,12 +224,13 @@ namespace ChessGame
                     countdownTimer.Dispose();
                     countdownTimer = null;
 
-                    matchStarted = true;  // Set matchStarted = true khi match bắt đầu
+                    matchStarted = true;
                     lblMatchStatus.Text = "Match started!";
                     
                     if (tcpServer != null)
                     {
                         tcpServer.BroadcastCountdown("Match started!");
+                        tcpServer.StartMatch();  // GỌI StartMatch() để gửi [OPPONENT] và mở form Chess
                     }
 
                     msgServer.Items.Add($"[{DateTime.Now:HH:mm:ss}] Match started!");
@@ -249,12 +250,7 @@ namespace ChessGame
                 btnStartMatch.Enabled = false;
                 UpdateUI();
 
-                // Gọi StartMatch trên TcpServer để log
-                if (tcpServer != null)
-                {
-                    tcpServer.StartMatch();
-                }
-
+                // StartMatch() sẽ được gọi SAU KHI countdown kết thúc
                 StartCountdown(5);
             }
         }

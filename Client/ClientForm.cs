@@ -52,7 +52,7 @@ namespace Client
 
             UpdateUI($"[Server] {message}");
 
-            // Match started - no longer need UDP setup
+            // Match started
             if (message.Contains("Match started!"))
             {
                 // Match will start when we have opponent info
