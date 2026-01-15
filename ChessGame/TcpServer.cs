@@ -351,11 +351,18 @@ namespace ChessGame
                 {
                     var clients = connectedClients.Values.ToList();
                     
-                    // Gửi [OPPONENT] cho cả 2 client để bắt đầu game
-                    clients[0].Writer.WriteLine("[OPPONENT]|" + clients[1].PlayerName + "|WHITE");
-                    clients[1].Writer.WriteLine("[OPPONENT]|" + clients[0].PlayerName + "|BLACK");
-                    
-                    OnLogMessage?.Invoke("Match started: " + clients[0].PlayerName + " (WHITE) vs " + clients[1].PlayerName + " (BLACK)");
+                    try
+                    {
+                        // Gửi [OPPONENT] cho cả 2 client để bắt đầu game
+                        clients[0].Writer.WriteLine("[OPPONENT]|" + clients[1].PlayerName + "|WHITE");
+                        clients[1].Writer.WriteLine("[OPPONENT]|" + clients[0].PlayerName + "|BLACK");
+                        
+                        OnLogMessage?.Invoke("Match started: " + clients[0].PlayerName + " (WHITE) vs " + clients[1].PlayerName + " (BLACK)");
+                    }
+                    catch (Exception ex)
+                    {
+                        OnLogMessage?.Invoke($"Error starting match: {ex.Message}");
+                    }
                 }
             }
         }
