@@ -19,7 +19,6 @@ namespace Client
         private string opponentName = "";
         private ChessGameForm gameForm;
         private bool inGame = false;
-        private UdpGameClient udpClient;
 
         public ClientForm(string name, string ip)
         {
@@ -53,29 +52,17 @@ namespace Client
 
             UpdateUI($"[Server] {message}");
 
-            // Match started
+            // Match started - no longer need UDP setup
             if (message.Contains("Match started!"))
             {
-                // Khởi tạo UDP client và gửi port cho server
-                InitializeUdpClient();
+                // Match will start when we have opponent info
             }
-            // UDP info từ server
-            else if (message.StartsWith("[UDP_INFO]"))
+            // MOVE message from server - relay to game form
+            else if (message.StartsWith("[MOVE]"))
             {
-                string[] parts = message.Substring(10).Split('|');
-                if (parts.Length >= 2)
+                if (gameForm != null && !gameForm.IsDisposed)
                 {
-                    string opponentIp = parts[0].Trim();
-                    int opponentPort = int.Parse(parts[1].Trim());
-                    
-                    if (udpClient != null)
-                    {
-                        udpClient.ConnectToOpponent(opponentIp, opponentPort);
-                        UpdateUI($"[UDP] Connected to opponent at {opponentIp}:{opponentPort}");
-                    }
-                    
-                    // Bắt đầu game sau khi kết nối UDP
-                    StartChessGame();
+                    gameForm.Invoke(new Action(() => gameForm.HandleOpponentMove(message)));
                 }
             }
             // Opponent info
@@ -86,6 +73,9 @@ namespace Client
                 {
                     opponentName = parts[1].Trim();
                     playerColor = parts[2].Trim() == "WHITE" ? PieceColor.White : PieceColor.Black;
+                    
+                    // Start game immediately after receiving opponent info
+                    StartChessGame();
                 }
             }
             // Opponent paused
@@ -120,13 +110,6 @@ namespace Client
                     }));
                 }
                 inGame = false;
-                
-                // Cleanup UDP client
-                if (udpClient != null)
-                {
-                    udpClient.Stop();
-                    udpClient = null;
-                }
             }
             // Server stopped match - PHẢI XỬ LÝ ĐÚNG
             else if (message.Contains("[STOPMATCH]"))
@@ -137,27 +120,6 @@ namespace Client
             else if (message.Contains("Server is shutting down"))
             {
                 HandleServerStopMatch();
-            }
-        }
-
-        private void InitializeUdpClient()
-        {
-            try
-            {
-                // Khởi tạo UDP client với port động (0 = tự động chọn)
-                udpClient = new UdpGameClient();
-                udpClient.Start(0); // Port 0 để OS tự động chọn port khả dụng
-                
-                // Lấy port được gán
-                int localPort = udpClient.GetLocalPort();
-                
-                // Gửi UDP port cho server
-                tcpConnection.SendMessage($"[UDP_PORT]{localPort}");
-                UpdateUI($"[UDP] Initialized on port {localPort}");
-            }
-            catch (Exception ex)
-            {
-                UpdateUI($"[UDP] Error initializing: {ex.Message}");
             }
         }
 
@@ -175,13 +137,6 @@ namespace Client
             }
             inGame = false;
             
-            // Cleanup UDP client
-            if (udpClient != null)
-            {
-                udpClient.Stop();
-                udpClient = null;
-            }
-            
             // Show lại form kết nối
             if (!this.Visible)
             {
@@ -196,7 +151,7 @@ namespace Client
             inGame = true;
             this.Hide();
 
-            gameForm = new ChessGameForm(playerColor, playerName, opponentName, udpClient);
+            gameForm = new ChessGameForm(playerColor, playerName, opponentName);
             gameForm.OnGameMessage += (msg) => tcpConnection.SendMessage(msg);
             gameForm.OnGameExited += () =>
             {
@@ -204,13 +159,6 @@ namespace Client
                 if (!this.IsDisposed)
                 {
                     this.Show();
-                }
-                
-                // Dọn dẹp UDP client
-                if (udpClient != null)
-                {
-                    udpClient.Stop();
-                    udpClient = null;
                 }
                 
                 gameForm = null;

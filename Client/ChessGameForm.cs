@@ -18,12 +18,11 @@ namespace Client
         private Button[,] cells;
         private int selectedRow = -1;
         private int selectedCol = -1;
-        private UdpGameClient udpClient;
 
         public event Action<string> OnGameMessage;
         public event Action OnGameExited;
 
-        public ChessGameForm(PieceColor color, string name, string opponent, UdpGameClient udpClient = null)
+        public ChessGameForm(PieceColor color, string name, string opponent)
         {
             InitializeComponent();
             chessBoard = new ChessBoard();
@@ -31,7 +30,6 @@ namespace Client
             playerName = name;
             opponentName = opponent;
             isMyTurn = (color == PieceColor.White);
-            this.udpClient = udpClient;
 
             this.Text = $"Chess Game - {playerName}";
             
@@ -44,13 +42,6 @@ namespace Client
             
             InitializeChessBoard();
             UpdateTurnDisplay();
-            
-            // Đăng ký sự kiện UDP nếu có
-            if (udpClient != null)
-            {
-                udpClient.OnMoveReceived += UdpClient_OnMoveReceived;
-                udpClient.OnGameMessage += UdpClient_OnGameMessage;
-            }
         }
 
         private void InitializeChessBoard()
@@ -233,26 +224,14 @@ namespace Client
             ClearSelection();
             UpdateBoardDisplay();
             
-            // Gửi nước đi qua UDP
-            if (udpClient != null)
-            {
-                udpClient.SendMove(r1, c1, r2, c2);
-            }
-            else
-            {
-                // Fallback qua TCP nếu không có UDP
-                OnGameMessage?.Invoke($"[MOVE]{r1},{c1}->{r2},{c2}");
-            }
+            // Gửi nước đi qua TCP
+            OnGameMessage?.Invoke($"[MOVE]{r1},{c1}->{r2},{c2}");
             
             // Kiểm tra chiếu bí
             PieceColor opponentColor = (playerColor == PieceColor.White) ? PieceColor.Black : PieceColor.White;
             if (chessBoard.IsCheckmate(opponentColor))
             {
                 MessageBox.Show("Checkmate! Bạn đã thắng!", "Game Over", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                if (udpClient != null)
-                {
-                    udpClient.SendMessage("[CHECKMATE]");
-                }
                 OnGameMessage?.Invoke("[CHECKMATE]");
                 return;
             }
@@ -300,16 +279,19 @@ namespace Client
             UpdateBoardDisplay();
         }
 
-        private void UdpClient_OnMoveReceived(string moveData)
+        public void HandleOpponentMove(string message)
         {
             if (InvokeRequired)
             {
-                Invoke(new Action(() => UdpClient_OnMoveReceived(moveData)));
+                Invoke(new Action(() => HandleOpponentMove(message)));
                 return;
             }
 
             try
             {
+                // Parse message: "[MOVE]r1,c1->r2,c2"
+                string moveData = message.StartsWith("[MOVE]") ? message.Substring(6) : message;
+                
                 // Parse move: "r1,c1->r2,c2"
                 string[] parts = moveData.Split(new[] { "->" }, StringSplitOptions.None);
                 if (parts.Length == 2)
@@ -352,24 +334,15 @@ namespace Client
                         MessageBox.Show("Checkmate! Bạn đã thua!", "Game Over", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
+                // Handle CHECKMATE message
+                else if (message == "[CHECKMATE]")
+                {
+                    MessageBox.Show("Đối thủ đã chiếu bí bạn!", "Game Over", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error parsing move: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private void UdpClient_OnGameMessage(string message)
-        {
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() => UdpClient_OnGameMessage(message)));
-                return;
-            }
-
-            if (message == "[CHECKMATE]")
-            {
-                MessageBox.Show("Đối thủ đã chiếu bí bạn!", "Game Over", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
