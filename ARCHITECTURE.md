@@ -5,19 +5,17 @@
 ```
 ┌─────────────────┐         TCP          ┌─────────────────┐
 │   Client A      │ ◄──────────────────► │   TCP Server    │
-│  (White Player) │     Port 5000        │  (ChessGame)    │
+│  (White Player) │     Port 5000        │  (Relay)        │
 └─────────────────┘                      └─────────────────┘
-        │                                         ▲
-        │                                         │
-        │ UDP (Direct P2P)                       │ TCP
-        │ Dynamic Port                            │
-        │                                         │
-        ▼                                         ▼
-┌─────────────────┐                      ┌─────────────────┐
-│   UDP Client    │                      │   Client B      │
-│    (White)      │ ◄──────────────────► │ (Black Player)  │
-└─────────────────┘     UDP Direct       └─────────────────┘
-                       Dynamic Port
+                                                  │
+                                                  │ TCP
+                                                  │ (Relay)
+                                                  │
+                                                  ▼
+                                          ┌─────────────────┐
+                                          │   Client B      │
+                                          │ (Black Player)  │
+                                          └─────────────────┘
 ```
 
 ## Communication Flow
@@ -33,43 +31,28 @@ Client A                Server              Client B
    │◄──[OPPONENT|B|WHITE]─┤                     │
    │                      ├─[OPPONENT|A|BLACK]─►│
    │                      │                     │
-   │◄───Match started!────┤────Match started!──►│
-   │                      │                     │
 ```
 
-### Phase 2: UDP Setup
+### Phase 2: Gameplay (TCP Relay)
 ```
 Client A                Server              Client B
    │                      │                     │
-   ├──Initialize UDP──┐   │                     │
-   │   (Port 12345)   │   │   ┌──Initialize UDP─┤
-   │                  │   │   │  (Port 54321)   │
-   ├─[UDP_PORT]12345──────►   │                 │
-   │                      ◄────[UDP_PORT]54321──┤
+   ├──User clicks piece──┐                     │
+   │  (validates move)   │                     │
+   │                     │                     │
+   ├──TCP: [MOVE]3,4->3,5────────►             │
    │                      │                     │
-   │◄[UDP_INFO]IP_B|54321─┤                     │
-   │                      ├─[UDP_INFO]IP_A|12345►│
+   │                      ├─TCP: [MOVE]3,4->3,5►│
    │                      │                     │
-   │──────Connect UDP─────┼──────────────────────►│
+   │                      │              ┌──Update board
+   │                      │              │  (opponent's move)
+   │                      │              │
+   │                      ◄──TCP: [MOVE]6,4->5,4┤
    │                      │                     │
-```
-
-### Phase 3: Gameplay
-```
-Client A                                    Client B
-   │                                           │
-   ├──User clicks piece──┐                    │
-   │  (validates move)   │                    │
-   │                     │                    │
-   ├──UDP: "3,4->3,5"────────────────────────►│
-   │                                          │
-   │                                   ┌──Update board
-   │                                   │  (opponent's move)
-   │                                   │
-   │◄─────────UDP: "6,4->5,4"──────────────────┤
-   │                                          │
-   └──Update board                            │
-      (opponent's move)                       │
+   │◄─TCP: [MOVE]6,4->5,4─┤                     │
+   │                      │                     │
+   └──Update board                              │
+      (opponent's move)                         │
 ```
 
 ## Component Responsibilities
@@ -86,20 +69,14 @@ Client A                                    Client B
 - Move validation before sending
 - Display updates on move received
 
-### UdpGameClient.cs
-- Peer-to-peer move transmission
-- Asynchronous message receiving
-- Event-based communication
-
 ### TcpServer.cs
 - Client matchmaking (2 players)
 - Color assignment
-- UDP endpoint exchange
+- Message relay between clients
 - Match coordination
 
 ### ClientForm.cs
 - Server connection management
-- UDP client initialization
 - Message routing
 - Game lifecycle management
 
@@ -115,42 +92,38 @@ Client A                                    Client B
                
 2. If valid:
    └─> chessBoard.MovePiece(r1,c1,r2,c2)
-   └─> udpClient.SendMove(r1,c1,r2,c2)
+   └─> OnGameMessage("[MOVE]r1,c1->r2,c2") - Send via TCP
    └─> UpdateBoardDisplay()
    └─> Check for checkmate
-       └─> If checkmate: SendMessage("[CHECKMATE]")
+       └─> If checkmate: OnGameMessage("[CHECKMATE]")
 ```
 
 ### Move Reception
 ```
-1. UdpClient.ReceiveAsync() gets data
-   └─> Parse "r1,c1->r2,c2"
-   └─> Invoke OnMoveReceived event
-       └─> ChessGameForm.UdpClient_OnMoveReceived()
-           └─> chessBoard.MovePiece(r1,c1,r2,c2)
-           └─> UpdateBoardDisplay()
-           └─> Check for checkmate
-           └─> Switch turn to player
+1. TcpServer receives [MOVE] message
+   └─> BroadcastMessage() - Relay to opponent
+       └─> ClientForm.TcpConnection_OnMessageReceived()
+           └─> ChessGameForm.HandleOpponentMove()
+               └─> Parse "[MOVE]r1,c1->r2,c2"
+               └─> chessBoard.MovePiece(r1,c1,r2,c2)
+               └─> UpdateBoardDisplay()
+               └─> Check for checkmate
+               └─> Switch turn to player
 ```
 
 ## Message Protocol
 
-### TCP Messages (Reliable)
+### TCP Messages (Client ↔ Server ↔ Client)
 | Message | Direction | Purpose |
 |---------|-----------|---------|
 | `PlayerName` | Client → Server | Initial identification |
 | `[OPPONENT]\|Name\|Color` | Server → Client | Match pairing |
-| `Match started!` | Server → Both | Game begin signal |
-| `[UDP_PORT]port` | Client → Server | Share UDP port |
-| `[UDP_INFO]ip\|port` | Server → Client | Opponent endpoint |
-| `[PAUSE]Name` | Any → All | Game pause |
-| `[EXIT]Name` | Any → All | Player quit |
-
-### UDP Messages (Fast)
-| Message | Direction | Purpose |
-|---------|-----------|---------|
-| `r1,c1->r2,c2` | Client ↔ Client | Chess move |
-| `[CHECKMATE]` | Winner → Loser | Game over |
+| `[MOVE]r1,c1->r2,c2` | Client → Server → Client | Chess move relay |
+| `[CHECKMATE]` | Client → Server → Client | Game over |
+| `[PAUSE]Name` | Client → Server → Client | Game pause |
+| `[RESUME]Name` | Client → Server → Client | Game resume |
+| `[EXIT]Name` | Client → Server → Client | Player quit |
+| `[STOPMATCH]` | Server → Clients | Server stopped match |
 
 ## UI Layout
 
@@ -185,8 +158,7 @@ Client A                                    Client B
 ✅ Check and checkmate detection  
 ✅ Interactive button-based UI
 ✅ Real-time move highlighting
-✅ UDP peer-to-peer communication
-✅ TCP server coordination
+✅ TCP server with message relay
 ✅ Color-coded piece display
 ✅ Turn-based gameplay enforcement
 

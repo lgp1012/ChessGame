@@ -49,18 +49,9 @@
 - [ ] Click OK and Connect
 - [ ] Server shows: "Bob (127.0.0.1) connected"
 - [ ] Server shows: "Match started between Alice and Bob"
-- [ ] Both clients show UDP initialization messages
-- [ ] Both clients show: "Match started!"
-- [ ] ChessGameForm opens for both players
+- [ ] ChessGameForm opens for both players immediately
 
-### Test 4: UDP Connection
-- [ ] Check Alice's client log: `[UDP] Initialized on port XXXXX`
-- [ ] Check Bob's client log: `[UDP] Initialized on port YYYYY`
-- [ ] Check Alice's client log: `[UDP] Connected to opponent at 127.0.0.1:YYYYY`
-- [ ] Check Bob's client log: `[UDP] Connected to opponent at 127.0.0.1:XXXXX`
-- [ ] No UDP errors shown
-
-### Test 5: Chess Board Display
+### Test 4: Chess Board Display
 - [ ] Both players see 8x8 board
 - [ ] Board has Beige and Brown squares (NOT White/Crimson)
 - [ ] All pieces display with Unicode symbols:
@@ -94,7 +85,8 @@
 - [ ] Valid moves (e3, e4) show in LightGreen
 - [ ] Click e4 destination
 - [ ] Pawn moves from e2 to e4 on White's board
-- [ ] Pawn moves from e2 to e4 on Black's board (via UDP)
+- [ ] Pawn moves from e2 to e4 on Black's board (via TCP relay)
+- [ ] Server shows: "Alice moved: [MOVE]6,4->4,4"
 - [ ] Turn changes to "Bob's Turn" on White's board
 - [ ] Turn changes to "Your Turn" on Black's board
 - [ ] No errors in either client
@@ -191,9 +183,9 @@
 
 ### Test 19: Move Speed
 - [ ] Make 10 rapid moves
-- [ ] Each move appears on opponent screen within 100ms
+- [ ] Each move appears on opponent screen quickly
 - [ ] No lag or delay noticeable
-- [ ] UDP faster than previous TCP-only version
+- [ ] TCP relay provides reliable delivery
 
 ### Test 20: Multiple Games
 - [ ] Close first pair of clients
@@ -254,7 +246,6 @@
 - No stalemate detection
 - No draw by repetition
 - No move timer/clock
-- UDP port assignment is random (not configurable)
 - Game requires exactly 2 players (no AI)
 
 ## Success Criteria
@@ -262,6 +253,6 @@
 ✅ All tests 1-18 must pass
 ✅ At least 15/22 tests should pass
 ✅ No critical crashes or data corruption
-✅ UDP communication works reliably
+✅ TCP communication and relay works reliably
 ✅ Chess rules enforced correctly
 ✅ UI updates properly on both sides

@@ -2,7 +2,7 @@
 
 ## Changes Summary
 
-This implementation adds complete chess game logic and UDP-based peer-to-peer communication for faster gameplay.
+This implementation features complete chess game logic and TCP-based server relay communication for all gameplay.
 
 ### 1. Chess Move Validation (`Client/ChessBoard.cs`)
 
@@ -23,19 +23,7 @@ Added comprehensive chess logic:
 - **`IsValidMoveSafe()`**: Safe move wrapper (includes check validation)
 - **`IsCheckmate(color)`**: Detects checkmate condition
 
-### 2. UDP Game Client (`Client/UdpGameClient.cs`)
-
-New class for peer-to-peer game communication:
-- **`Start(port)`**: Initialize UDP client on specified port (use 0 for auto-assign)
-- **`ConnectToOpponent(ip, port)`**: Connect to opponent's UDP endpoint
-- **`SendMove(r1, c1, r2, c2)`**: Send move in format "r1,c1->r2,c2"
-- **`ReceiveAsync()`**: Asynchronously receive opponent moves
-- **`SendMessage(msg)`**: Send game messages (CHECKMATE, etc.)
-- **Events**:
-  - `OnMoveReceived`: Fired when opponent move is received
-  - `OnGameMessage`: Fired for game control messages
-
-### 3. Updated UI (`Client/ChessGameForm.cs`)
+### 2. Updated UI (`Client/ChessGameForm.cs`)
 
 Complete UI rewrite:
 - Changed from Graphics-based drawing to **Button[,] array** for interactive board
@@ -48,60 +36,50 @@ Complete UI rewrite:
   - **Gold**: Selected piece
   - **LightGreen**: Valid empty square
   - **IndianRed**: Capturable opponent piece
-- Integrated UDP client for move transmission
+- Sends moves via TCP through OnGameMessage event
 - Real-time checkmate detection
 
-### 4. Server Updates (`ChessGame/TcpServer.cs`)
+### 3. Server Updates (`ChessGame/TcpServer.cs`)
 
-Enhanced TCP server:
-- Tracks client UDP ports and IP addresses
+Enhanced TCP server with message relay:
 - Match pairing when 2 clients connect:
   - Assigns colors (WHITE/BLACK)
   - Sends opponent information
-- UDP endpoint exchange:
-  - Receives `[UDP_PORT]` from clients
-  - Sends `[UDP_INFO]<ip>|<port>` to both clients
-  - Enables direct peer-to-peer UDP communication
+- Message relay functionality:
+  - Receives `[MOVE]` messages from clients
+  - Broadcasts to opponent client
+  - Enables server-mediated communication
 
-### 5. Client Form Updates (`Client/ClientForm.cs`)
+### 4. Client Form Updates (`Client/ClientForm.cs`)
 
 Enhanced client connection handler:
-- Initializes `UdpGameClient` when match starts
-- Handles `[UDP_INFO]` message from server
-- Passes UDP client to ChessGameForm
-- Cleanup of UDP resources on game exit
+- Handles `[MOVE]` message relay from server
+- Routes moves to ChessGameForm via HandleOpponentMove()
+- Starts game immediately after receiving opponent info
+- Simplified game lifecycle management
 
 ## Communication Flow
 
 ### Initial Connection (TCP)
 1. Client A & B connect to server (TCP port 5000)
 2. Server assigns colors and sends opponent info via `[OPPONENT]` message
-3. Server broadcasts "Match started!"
-
-### UDP Setup
-4. Each client initializes UDP client on dynamic port
-5. Clients send `[UDP_PORT]<port>` to server
-6. Server exchanges UDP endpoints via `[UDP_INFO]<ip>|<port>`
-7. Clients establish direct UDP connection
+3. Game starts immediately after opponent info received
 
 ### Gameplay
-8. Chess moves transmitted via **UDP** (fast, real-time)
-9. Control messages (PAUSE, EXIT, CHECKMATE) via **TCP** (reliable)
+4. Chess moves transmitted via **TCP** through server relay
+5. Control messages (PAUSE, EXIT, CHECKMATE) also via **TCP**
+6. Server relays all messages between clients
 
 ## Message Formats
 
-### TCP Messages (Server ↔ Client)
+### TCP Messages (Client ↔ Server ↔ Client)
 - `[OPPONENT]|<name>|<WHITE|BLACK>` - Opponent info and color assignment
-- `[UDP_PORT]<port>` - Client → Server: My UDP port
-- `[UDP_INFO]<ip>|<port>` - Server → Client: Opponent UDP endpoint
+- `[MOVE]r1,c1->r2,c2` - Chess move (relayed by server)
+- `[CHECKMATE]` - Game over (relayed by server)
 - `[PAUSE]<name>` - Player paused
+- `[RESUME]<name>` - Player resumed
 - `[EXIT]<name>` - Player exited
 - `[STOPMATCH]` - Server stopped match
-- `Match started!` - Game beginning
-
-### UDP Messages (Client ↔ Client)
-- `<r1>,<c1>-><r2>,<c2>` - Chess move
-- `[CHECKMATE]` - Game over
 
 ## Building and Testing
 

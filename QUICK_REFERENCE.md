@@ -8,12 +8,11 @@ ChessGame/
 ├── Client/                      # Client application
 │   ├── ChessBoard.cs           # Chess logic and validation
 │   ├── ChessGameForm.cs        # Game UI (button-based board)
-│   ├── UdpGameClient.cs        # UDP peer-to-peer communication
 │   ├── ClientForm.cs           # Connection UI
 │   ├── TcpClient.cs            # TCP server connection
 │   └── Client.csproj           # Client project file
 ├── ChessGame/                   # Server application
-│   ├── TcpServer.cs            # TCP server with UDP coordination
+│   ├── TcpServer.cs            # TCP server with message relay
 │   ├── ServerForm.cs           # Server UI
 │   └── Server.csproj           # Server project file
 └── Documentation/
@@ -40,36 +39,13 @@ bool inCheck = board.IsInCheck(PieceColor.White);
 bool checkmate = board.IsCheckmate(PieceColor.White);
 ```
 
-#### UdpGameClient
-```csharp
-// Initialize
-UdpGameClient udp = new UdpGameClient();
-udp.Start(0); // 0 = auto-assign port
-int port = udp.GetLocalPort();
-
-// Connect to opponent
-udp.ConnectToOpponent("192.168.1.100", 54321);
-
-// Send move
-udp.SendMove(fromRow, fromCol, toRow, toCol);
-
-// Handle received moves
-udp.OnMoveReceived += (moveData) => {
-    // Parse and apply move
-};
-
-// Clean up
-udp.Stop();
-```
-
 #### ChessGameForm
 ```csharp
-// Create game form with UDP
+// Create game form
 ChessGameForm game = new ChessGameForm(
     playerColor,
     playerName,
-    opponentName,
-    udpClient  // optional
+    opponentName
 );
 
 // Handle game events
@@ -188,8 +164,7 @@ game.OnGameExited += () => {
 | Problem | Solution |
 |---------|----------|
 | Build fails on Linux | Use Windows (requires .NET Framework 4.8) |
-| UDP not connecting | Check firewall, verify port exchange |
-| Moves don't appear | Check UDP events are subscribed |
+| Moves don't appear | Check server relay and message handlers |
 | Invalid moves accepted | Verify `IsValidMoveSafe()` is called |
 | Board colors wrong | Check Beige/Brown not White/Crimson |
 | Pieces display as ? | Font doesn't support Unicode chess symbols |
@@ -198,7 +173,7 @@ game.OnGameExited += () => {
 
 ### Performance Tips
 
-1. **UDP vs TCP**: Moves via UDP (fast), control via TCP (reliable)
+1. **TCP relay**: All messages through server (reliable but slight latency)
 2. **Move validation**: Always validate both locally and on receive
 3. **Board updates**: Use `UpdateBoardDisplay()` sparingly
 4. **Event handlers**: Keep handlers lightweight, use Invoke for UI
@@ -206,17 +181,17 @@ game.OnGameExited += () => {
 ### Security Considerations
 
 ⚠️ **Current limitations:**
-- No encryption on UDP messages
+- No encryption on TCP messages
 - Moves validated but no authentication
 - No protection against replay attacks
-- Server fully trusts client UDP ports
+- Server fully trusts all clients
 
 🔒 **For production:**
 - Add TLS/SSL for TCP connections
-- Encrypt UDP payloads
 - Add player authentication
 - Implement anti-cheat validation
 - Rate limiting on moves
+- Message signing
 
 ### Extension Ideas
 
