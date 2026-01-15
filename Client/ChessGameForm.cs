@@ -77,6 +77,38 @@ namespace Client
             
             UpdateBoardDisplay();
         }
+        
+        // Chuyển đổi tọa độ hiển thị dựa trên màu quân
+        private void GetDisplayCoordinates(int boardRow, int boardCol, out int displayRow, out int displayCol)
+        {
+            if (playerColor == PieceColor.Black)
+            {
+                // Xoay bàn cờ 180 độ cho người chơi quân đen
+                displayRow = 7 - boardRow;
+                displayCol = 7 - boardCol;
+            }
+            else
+            {
+                displayRow = boardRow;
+                displayCol = boardCol;
+            }
+        }
+        
+        // Chuyển đổi tọa độ từ hiển thị sang bàn cờ
+        private void GetBoardCoordinates(int displayRow, int displayCol, out int boardRow, out int boardCol)
+        {
+            if (playerColor == PieceColor.Black)
+            {
+                // Xoay ngược lại
+                boardRow = 7 - displayRow;
+                boardCol = 7 - displayCol;
+            }
+            else
+            {
+                boardRow = displayRow;
+                boardCol = displayCol;
+            }
+        }
 
         private void UpdateTurnDisplay()
         {
@@ -99,16 +131,19 @@ namespace Client
 
         private void UpdateBoardDisplay()
         {
-            for (int row = 0; row < ChessBoard.BOARD_SIZE; row++)
+            for (int boardRow = 0; boardRow < ChessBoard.BOARD_SIZE; boardRow++)
             {
-                for (int col = 0; col < ChessBoard.BOARD_SIZE; col++)
+                for (int boardCol = 0; boardCol < ChessBoard.BOARD_SIZE; boardCol++)
                 {
-                    ChessPiece piece = chessBoard.GetPiece(row, col);
-                    cells[row, col].Text = piece != null ? GetPieceSymbol(piece.Type, piece.Color) : "";
-                    cells[row, col].ForeColor = piece != null && piece.Color == PieceColor.White ? Color.White : Color.Black;
+                    // Lấy tọa độ hiển thị dựa trên màu quân
+                    GetDisplayCoordinates(boardRow, boardCol, out int displayRow, out int displayCol);
                     
-                    // Reset màu nền về màu bàn cờ
-                    cells[row, col].BackColor = ((row + col) % 2 == 0) ? Color.Beige : Color.Brown;
+                    ChessPiece piece = chessBoard.GetPiece(boardRow, boardCol);
+                    cells[displayRow, displayCol].Text = piece != null ? GetPieceSymbol(piece.Type, piece.Color) : "";
+                    cells[displayRow, displayCol].ForeColor = piece != null && piece.Color == PieceColor.White ? Color.White : Color.Black;
+                    
+                    // Reset màu nền về màu bàn cờ (dựa trên tọa độ hiển thị)
+                    cells[displayRow, displayCol].BackColor = ((displayRow + displayCol) % 2 == 0) ? Color.Beige : Color.Brown;
                 }
             }
         }
@@ -144,10 +179,13 @@ namespace Client
             }
         }
 
-        private void CellClick(int row, int col)
+        private void CellClick(int displayRow, int displayCol)
         {
             if (isPaused || !isMyTurn)
                 return;
+
+            // Chuyển đổi từ tọa độ hiển thị sang tọa độ bàn cờ
+            GetBoardCoordinates(displayRow, displayCol, out int row, out int col);
 
             // Nếu chưa chọn quân nào
             if (selectedRow == -1)
@@ -220,8 +258,9 @@ namespace Client
 
         private void HighlightMoves(int row, int col)
         {
-            // Highlight quân được chọn
-            cells[row, col].BackColor = Color.Gold;
+            // Highlight quân được chọn (chuyển đổi sang tọa độ hiển thị)
+            GetDisplayCoordinates(row, col, out int selectedDisplayRow, out int selectedDisplayCol);
+            cells[selectedDisplayRow, selectedDisplayCol].BackColor = Color.Gold;
             
             // Highlight các nước đi hợp lệ
             for (int r = 0; r < ChessBoard.BOARD_SIZE; r++)
@@ -230,16 +269,18 @@ namespace Client
                 {
                     if (chessBoard.IsValidMoveSafe(row, col, r, c))
                     {
+                        GetDisplayCoordinates(r, c, out int displayR, out int displayC);
+                        
                         ChessPiece target = chessBoard.GetPiece(r, c);
                         if (target != null)
                         {
                             // Ô có quân đối phương
-                            cells[r, c].BackColor = Color.IndianRed;
+                            cells[displayR, displayC].BackColor = Color.IndianRed;
                         }
                         else
                         {
                             // Ô trống
-                            cells[r, c].BackColor = Color.LightGreen;
+                            cells[displayR, displayC].BackColor = Color.LightGreen;
                         }
                     }
                 }

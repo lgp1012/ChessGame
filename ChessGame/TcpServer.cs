@@ -170,8 +170,8 @@ namespace ChessGame
                 OnClientConnected?.Invoke($"{playerName} ({clientIp})");
                 OnLogMessage?.Invoke($"{playerName} connected from {clientIp}");
                 
-                // Khi có 2 client, bắt đầu match và trao đổi thông tin UDP
-                CheckAndStartMatch();
+                // Khi có 2 client, gán màu nhưng KHÔNG tự động bắt đầu match
+                AssignColors();
 
                 // Listen for messages from client
                 string line;
@@ -201,6 +201,22 @@ namespace ChessGame
                             // Kiểm tra và gửi thông tin UDP nếu đủ 2 client
                             CheckAndExchangeUdpInfo();
                         }
+                        continue;
+                    }
+                    
+                    // Xử lý PAUSE message
+                    if (line.StartsWith("[PAUSE]"))
+                    {
+                        OnLogMessage?.Invoke($"{playerName} paused the game");
+                        BroadcastMessage(line, clientId);
+                        continue;
+                    }
+                    
+                    // Xử lý EXIT message
+                    if (line.StartsWith("[EXIT]"))
+                    {
+                        OnLogMessage?.Invoke($"{playerName} exited the game");
+                        BroadcastMessage(line, clientId);
                         continue;
                     }
 
@@ -294,9 +310,9 @@ namespace ChessGame
         }
 
         /// <summary>
-        /// Kiểm tra và bắt đầu match khi có 2 client
+        /// Gán màu cho 2 client khi đủ người
         /// </summary>
-        private void CheckAndStartMatch()
+        private void AssignColors()
         {
             lock (connectedClients)
             {
@@ -308,8 +324,21 @@ namespace ChessGame
                     clients[0].Writer.WriteLine("[OPPONENT]|" + clients[1].PlayerName + "|WHITE");
                     clients[1].Writer.WriteLine("[OPPONENT]|" + clients[0].PlayerName + "|BLACK");
                     
-                    // Thông báo match bắt đầu
-                    BroadcastCountdown("Match started!");
+                    OnLogMessage?.Invoke("Colors assigned: " + clients[0].PlayerName + " (WHITE) vs " + clients[1].PlayerName + " (BLACK)");
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Bắt đầu match - được gọi từ ServerForm khi admin nhấn Start Match
+        /// </summary>
+        public void StartMatch()
+        {
+            lock (connectedClients)
+            {
+                if (connectedClients.Count == 2)
+                {
+                    var clients = connectedClients.Values.ToList();
                     OnLogMessage?.Invoke("Match started between " + clients[0].PlayerName + " and " + clients[1].PlayerName);
                 }
             }
