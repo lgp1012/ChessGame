@@ -14,6 +14,7 @@ namespace Client
         private int squareSize = 60;
         private bool isPaused = false;
         private bool isPausedByMe = false; // Track if I initiated the pause
+        private bool isBlockedByOpponent = false; // Track if opponent paused the game
         private Button[,] cells;
         private int selectedRow = -1;
         private int selectedCol = -1;
@@ -186,7 +187,7 @@ namespace Client
 
         private void CellClick(int displayRow, int displayCol)
         {
-            if (isPaused || !isMyTurn)
+            if (isPaused || !isMyTurn || isBlockedByOpponent)
                 return;
 
             // Chuyển đổi từ tọa độ hiển thị sang tọa độ bàn cờ
@@ -430,7 +431,8 @@ namespace Client
             }
 
             isPaused = true;
-            pauseLabel.Text = $"{opponentPausedName} đã tạm dừng trận đấu";
+            isBlockedByOpponent = true;
+            pauseLabel.Text = $"{opponentPausedName} đã tạm dừng trận đấu.\nVui lòng chờ...";
             pauseOverlay.Visible = true;
             pauseOverlay.BringToFront();
             
@@ -456,6 +458,7 @@ namespace Client
             }
 
             isPaused = false;
+            isBlockedByOpponent = false;
             pauseOverlay.Visible = false;
             
             // Enable all cell buttons
