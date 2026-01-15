@@ -135,6 +135,10 @@ namespace ChessGame
             tcpServer.OnClientConnected += TcpServer_OnClientConnected;
             tcpServer.OnClientDisconnected += TcpServer_OnClientDisconnected;
             tcpServer.OnLogMessage += TcpServer_OnLogMessage;
+            tcpServer.OnMatchShouldReset += TcpServer_OnMatchShouldReset;
+            tcpServer.OnClientPaused += TcpServer_OnClientPaused;
+            tcpServer.OnClientResumed += TcpServer_OnClientResumed;
+            tcpServer.OnClientExited += TcpServer_OnClientExited;
             tcpServer.Start();
 
             msgServer.Items.Add($"[{DateTime.Now:HH:mm:ss}] Server started");
@@ -164,6 +168,10 @@ namespace ChessGame
                 tcpServer.OnClientConnected -= TcpServer_OnClientConnected;
                 tcpServer.OnClientDisconnected -= TcpServer_OnClientDisconnected;
                 tcpServer.OnLogMessage -= TcpServer_OnLogMessage;
+                tcpServer.OnMatchShouldReset -= TcpServer_OnMatchShouldReset;
+                tcpServer.OnClientPaused -= TcpServer_OnClientPaused;
+                tcpServer.OnClientResumed -= TcpServer_OnClientResumed;
+                tcpServer.OnClientExited -= TcpServer_OnClientExited;
                 tcpServer = null;
             }
 
@@ -285,6 +293,62 @@ namespace ChessGame
             }
 
             System.Diagnostics.Debug.WriteLine($"[TCP Server] {message}");
+        }
+
+        private void TcpServer_OnMatchShouldReset()
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => TcpServer_OnMatchShouldReset()));
+                return;
+            }
+
+            // Reset match state when not enough clients
+            if (matchStarted)
+            {
+                matchStarted = false;
+                lblMatchStatus.Text = "Waiting for players...";
+                msgServer.Items.Add($"[{DateTime.Now:HH:mm:ss}] Match auto-reset: not enough players");
+                UpdateUI();
+            }
+        }
+
+        private void TcpServer_OnClientPaused(string playerName, string timestamp)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => TcpServer_OnClientPaused(playerName, timestamp)));
+                return;
+            }
+
+            lblMatchStatus.Text = $"Match is paused by {playerName}";
+            msgServer.Items.Add($"[{timestamp}] {playerName} đã tạm dừng ván đấu");
+        }
+
+        private void TcpServer_OnClientResumed(string playerName, string timestamp)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => TcpServer_OnClientResumed(playerName, timestamp)));
+                return;
+            }
+
+            if (matchStarted)
+            {
+                lblMatchStatus.Text = "Match started!";
+            }
+            msgServer.Items.Add($"[{timestamp}] {playerName} đã tiếp tục ván đấu");
+        }
+
+        private void TcpServer_OnClientExited(string playerName, string timestamp)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => TcpServer_OnClientExited(playerName, timestamp)));
+                return;
+            }
+
+            msgServer.Items.Add($"[{timestamp}] {playerName} đã thoát ván đấu");
         }
 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)

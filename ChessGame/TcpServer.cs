@@ -21,6 +21,10 @@ namespace ChessGame
         public event Action<string> OnClientConnected;
         public event Action<string> OnClientDisconnected;
         public event Action<string> OnLogMessage;
+        public event Action OnMatchShouldReset;
+        public event Action<string, string> OnClientPaused; // playerName, timestamp
+        public event Action<string, string> OnClientResumed; // playerName, timestamp
+        public event Action<string, string> OnClientExited; // playerName, timestamp
 
         private class ClientConnection
         {
@@ -207,7 +211,19 @@ namespace ChessGame
                     // Xử lý PAUSE message
                     if (line.StartsWith("[PAUSE]"))
                     {
-                        OnLogMessage?.Invoke($"{playerName} paused the game");
+                        string timestamp = DateTime.Now.ToString("HH:mm:ss");
+                        OnLogMessage?.Invoke($"[{timestamp}] {playerName} paused the game");
+                        OnClientPaused?.Invoke(playerName, timestamp);
+                        BroadcastMessage(line, clientId);
+                        continue;
+                    }
+                    
+                    // Xử lý RESUME message
+                    if (line.StartsWith("[RESUME]"))
+                    {
+                        string timestamp = DateTime.Now.ToString("HH:mm:ss");
+                        OnLogMessage?.Invoke($"[{timestamp}] {playerName} resumed the game");
+                        OnClientResumed?.Invoke(playerName, timestamp);
                         BroadcastMessage(line, clientId);
                         continue;
                     }
@@ -215,7 +231,9 @@ namespace ChessGame
                     // Xử lý EXIT message
                     if (line.StartsWith("[EXIT]"))
                     {
-                        OnLogMessage?.Invoke($"{playerName} exited the game");
+                        string timestamp = DateTime.Now.ToString("HH:mm:ss");
+                        OnLogMessage?.Invoke($"[{timestamp}] {playerName} exited the game");
+                        OnClientExited?.Invoke(playerName, timestamp);
                         BroadcastMessage(line, clientId);
                         continue;
                     }
@@ -249,6 +267,12 @@ namespace ChessGame
                 {
                     OnClientDisconnected?.Invoke($"{playerName}");
                     OnLogMessage?.Invoke($"{playerName} disconnected. Total clients: {connectedClients.Count}");
+                    
+                    // Reset match state if less than 2 clients
+                    if (connectedClients.Count < 2)
+                    {
+                        OnMatchShouldReset?.Invoke();
+                    }
                 }
             }
         }

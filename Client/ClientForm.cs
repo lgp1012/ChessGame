@@ -97,6 +97,15 @@ namespace Client
                     gameForm.ShowOpponentPauseMessage(opponentPausedName);
                 }
             }
+            // Opponent resumed
+            else if (message.StartsWith("[RESUME]"))
+            {
+                string opponentResumedName = message.Substring(8).Trim();
+                if (gameForm != null && !gameForm.IsDisposed)
+                {
+                    gameForm.HideOpponentPauseOverlay();
+                }
+            }
             // Opponent exited
             else if (message.StartsWith("[EXIT]"))
             {
