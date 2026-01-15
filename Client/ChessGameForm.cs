@@ -13,6 +13,7 @@ namespace Client
         private bool isMyTurn;
         private int squareSize = 60;
         private bool isPaused = false;
+        private bool isPausedByMe = false; // Track if I initiated the pause
         private Button[,] cells;
         private int selectedRow = -1;
         private int selectedCol = -1;
@@ -369,13 +370,30 @@ namespace Client
 
         private void btnPause_Click(object sender, EventArgs e)
         {
-            DialogResult result = MessageBox.Show("Tiếp tục ván đấu?", "Pause", 
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-            if (result == DialogResult.No)
+            if (!isPausedByMe)
             {
-                isPaused = true;
-                OnGameMessage?.Invoke($"[PAUSE]{playerName}");
+                // Currently not paused by me, show pause dialog
+                DialogResult result = MessageBox.Show("Bạn muốn tạm dừng ván đấu?", "Pause", 
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (result == DialogResult.Yes)
+                {
+                    isPaused = true;
+                    isPausedByMe = true;
+                    OnGameMessage?.Invoke($"[PAUSE]{playerName}");
+                    btnPause.Text = "Resume";
+                    btnPause.BackColor = Color.Green;
+                    UpdateTurnDisplay();
+                }
+            }
+            else
+            {
+                // Currently paused by me, resume
+                isPaused = false;
+                isPausedByMe = false;
+                OnGameMessage?.Invoke($"[RESUME]{playerName}");
+                btnPause.Text = "Pause";
+                btnPause.BackColor = Color.Orange;
                 UpdateTurnDisplay();
             }
         }
@@ -401,9 +419,51 @@ namespace Client
 
         public void ShowOpponentPauseMessage(string opponentPausedName)
         {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => ShowOpponentPauseMessage(opponentPausedName)));
+                return;
+            }
+
             isPaused = true;
-            MessageBox.Show($"{opponentPausedName} đã tạm dừng ván đấu. Vui lòng chờ!", "Đối thủ tạm dừng",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            pauseLabel.Text = $"{opponentPausedName} đã tạm dừng trận đấu";
+            pauseOverlay.Visible = true;
+            pauseOverlay.BringToFront();
+            
+            // Disable all cell buttons
+            if (cells != null)
+            {
+                foreach (var btn in cells)
+                {
+                    if (btn != null)
+                        btn.Enabled = false;
+                }
+            }
+            
+            UpdateTurnDisplay();
+        }
+
+        public void HideOpponentPauseOverlay()
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => HideOpponentPauseOverlay()));
+                return;
+            }
+
+            isPaused = false;
+            pauseOverlay.Visible = false;
+            
+            // Enable all cell buttons
+            if (cells != null)
+            {
+                foreach (var btn in cells)
+                {
+                    if (btn != null)
+                        btn.Enabled = true;
+                }
+            }
+            
             UpdateTurnDisplay();
         }
 
