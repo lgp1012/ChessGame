@@ -1,6 +1,6 @@
-# Chess Game with UDP Communication
+# Chess Game with TCP Communication
 
-A complete multiplayer chess game built with C# .NET Framework 4.8, featuring real-time gameplay over UDP for fast move transmission and TCP for reliable server coordination.
+A complete multiplayer chess game built with C# .NET Framework 4.8, featuring real-time gameplay over TCP with server relay for all game communication.
 
 ## 🎯 Features
 
@@ -21,9 +21,8 @@ A complete multiplayer chess game built with C# .NET Framework 4.8, featuring re
 - 🖱️ Click-to-move interface with visual feedback
 
 ### Network Architecture
-- 🌐 **TCP Server**: Matchmaking and coordination
-- ⚡ **UDP Peer-to-Peer**: Fast, direct move transmission
-- 🔄 **Hybrid Protocol**: TCP for control, UDP for gameplay
+- 🌐 **TCP Server**: Matchmaking, coordination, and message relay
+- 🔄 **TCP Protocol**: All communication through server relay
 - 🔒 **Move Validation**: Both client and opponent moves validated
 
 ## 🚀 Quick Start
@@ -100,21 +99,21 @@ A complete multiplayer chess game built with C# .NET Framework 4.8, featuring re
 ```
 ┌─────────────┐           TCP            ┌─────────────┐
 │  Client A   │ ◄──────────────────────► │ TCP Server  │
-│   (White)   │      Port 5000           │ (Matching)  │
+│   (White)   │      Port 5000           │  (Relay)    │
 └─────────────┘                          └─────────────┘
-       │                                        │
-       │ UDP Direct (Dynamic Port)             │ TCP
-       ▼                                        ▼
-┌─────────────┐                          ┌─────────────┐
-│ UdpClient A │ ◄──────────────────────► │  Client B   │
-└─────────────┘      UDP P2P             │   (Black)   │
+                                                 │
+                                                 │ TCP
+                                                 ▼
+                                          ┌─────────────┐
+                                          │  Client B   │
+                                          │   (Black)   │
                                           └─────────────┘
 ```
 
 ### Communication Flow
 1. **TCP**: Initial connection, matchmaking, opponent info
-2. **UDP Setup**: Server exchanges UDP endpoints
-3. **UDP Gameplay**: Direct peer-to-peer move transmission
+2. **TCP Relay**: Server relays all game messages between clients
+3. **TCP Gameplay**: All moves transmitted through server
 4. **TCP Control**: Pause, exit, server commands
 
 ## 🧩 Project Structure
@@ -124,12 +123,11 @@ ChessGame/
 ├── Client/                         # Client Application
 │   ├── ChessBoard.cs              # Chess logic & validation
 │   ├── ChessGameForm.cs           # Game UI (button board)
-│   ├── UdpGameClient.cs           # UDP communication
 │   ├── ClientForm.cs              # Connection UI
 │   ├── TcpClient.cs               # TCP server connection
 │   └── Client.csproj              # Client project
 ├── ChessGame/                      # Server Application
-│   ├── TcpServer.cs               # TCP server & UDP coordination
+│   ├── TcpServer.cs               # TCP server with message relay
 │   ├── ServerForm.cs              # Server UI
 │   └── Server.csproj              # Server project
 └── Documentation/
@@ -155,18 +153,11 @@ Interactive game UI featuring:
 - Move highlighting system
 - Real-time board updates
 
-### UdpGameClient.cs
-Peer-to-peer game communication:
-- Dynamic port assignment
-- Asynchronous message receiving
-- Event-based architecture
-- Move serialization (format: `r1,c1->r2,c2`)
-
 ### TcpServer.cs
-Server coordination:
+Server coordination and relay:
 - Client matchmaking (pairs of 2)
 - Color assignment (White/Black)
-- UDP endpoint exchange
+- Message relay between clients
 - Game lifecycle management
 
 ## 📋 Chess Rules Implemented
@@ -207,7 +198,6 @@ Server coordination:
 - Exactly 2 players required (no AI)
 - No game history or replay
 - No save/load functionality
-- UDP ports dynamically assigned (firewall may block)
 
 ## 🎯 Testing
 
@@ -237,8 +227,7 @@ This project is open source and available under standard terms.
 ## 🙏 Acknowledgments
 
 - Built with C# and Windows Forms
-- UDP protocol for real-time gameplay
-- TCP for reliable server coordination
+- TCP protocol for reliable communication and server relay
 
 ---
 
