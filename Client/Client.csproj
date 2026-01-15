@@ -46,6 +46,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ChessBoard.cs" />
+    <Compile Include="ChessGameForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ChessGameForm.Designer.cs">
+      <DependentUpon>ChessGameForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="ClientForm.cs">
       <SubType>Form</SubType>
     </Compile>

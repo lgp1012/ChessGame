@@ -1,0 +1,74 @@
+﻿namespace Client
+{
+    partial class ChessGameForm
+    {
+        private System.ComponentModel.IContainer components = null;
+        private System.Windows.Forms.Button btnPause;
+        private System.Windows.Forms.Button btnExit;
+        private System.Windows.Forms.Label lblTurn;
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        private void InitializeComponent()
+        {
+            this.btnPause = new System.Windows.Forms.Button();
+            this.btnExit = new System.Windows.Forms.Button();
+            this.lblTurn = new System.Windows.Forms.Label();
+            this.SuspendLayout();
+            
+            // lblTurn
+            this.lblTurn.AutoSize = true;
+            this.lblTurn.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblTurn.Location = new System.Drawing.Point(20, 20);
+            this.lblTurn.Name = "lblTurn";
+            this.lblTurn.Size = new System.Drawing.Size(120, 26);
+            this.lblTurn.TabIndex = 0;
+            this.lblTurn.Text = "Your Turn";
+            this.lblTurn.ForeColor = System.Drawing.Color.Green;
+            
+            // btnPause
+            this.btnPause.BackColor = System.Drawing.Color.Orange;
+            this.btnPause.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnPause.ForeColor = System.Drawing.Color.White;
+            this.btnPause.Location = new System.Drawing.Point(20, 55);
+            this.btnPause.Name = "btnPause";
+            this.btnPause.Size = new System.Drawing.Size(110, 35);
+            this.btnPause.TabIndex = 1;
+            this.btnPause.Text = "Pause";
+            this.btnPause.UseVisualStyleBackColor = false;
+            this.btnPause.Click += new System.EventHandler(this.btnPause_Click);
+            
+            // btnExit
+            this.btnExit.BackColor = System.Drawing.Color.Red;
+            this.btnExit.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnExit.ForeColor = System.Drawing.Color.White;
+            this.btnExit.Location = new System.Drawing.Point(140, 55);
+            this.btnExit.Name = "btnExit";
+            this.btnExit.Size = new System.Drawing.Size(110, 35);
+            this.btnExit.TabIndex = 2;
+            this.btnExit.Text = "Exit";
+            this.btnExit.UseVisualStyleBackColor = false;
+            this.btnExit.Click += new System.EventHandler(this.btnExit_Click);
+            
+            // ChessGameForm
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(600, 700);
+            this.Controls.Add(this.btnExit);
+            this.Controls.Add(this.btnPause);
+            this.Controls.Add(this.lblTurn);
+            this.Name = "ChessGameForm";
+            this.Text = "Chess Game";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+            this.ResumeLayout(false);
+            this.PerformLayout();
+        }
+    }
+}

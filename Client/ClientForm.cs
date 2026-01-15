@@ -15,35 +15,130 @@ namespace Client
         private TcpClientConnection tcpConnection;
         private string playerName;
         private string serverIP;
+        private PieceColor playerColor = PieceColor.White;
+        private string opponentName = "";
+        private ChessGameForm gameForm;
+        private bool inGame = false;
 
-        // Constructor bắt buộc nhận playerName và serverIP
         public ClientForm(string name, string ip)
         {
             InitializeComponent();
             playerName = name;
             serverIP = ip;
             
-            // Update title with player name
             if (!string.IsNullOrEmpty(playerName))
             {
                 this.Text = $"Chess Game - {playerName}";
                 lblTitle.Text = $"Chess Game Client - {playerName}";
             }
 
-            // Initialize TCP connection với server IP
             tcpConnection = new TcpClientConnection(serverIP);
             tcpConnection.OnMessageReceived += TcpConnection_OnMessageReceived;
             tcpConnection.OnConnectionStatusChanged += TcpConnection_OnConnectionStatusChanged;
             tcpConnection.OnError += TcpConnection_OnError;
 
-            // Initialize button states
             btnDisconnect.Enabled = false;
             btnConnect.Enabled = true;
         }
 
         private void TcpConnection_OnMessageReceived(string message)
         {
+            // Xử lý trên UI thread
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => TcpConnection_OnMessageReceived(message)));
+                return;
+            }
+
             UpdateUI($"[Server] {message}");
+
+            // Match started
+            if (message.Contains("Match started!"))
+            {
+                StartChessGame();
+            }
+            // Opponent info
+            else if (message.StartsWith("[OPPONENT]"))
+            {
+                string[] parts = message.Split('|');
+                if (parts.Length >= 3)
+                {
+                    opponentName = parts[1].Trim();
+                    playerColor = parts[2].Trim() == "WHITE" ? PieceColor.White : PieceColor.Black;
+                }
+            }
+            // Opponent paused
+            else if (message.StartsWith("[PAUSE]"))
+            {
+                string opponentPausedName = message.Substring(7).Trim();
+                if (gameForm != null && !gameForm.IsDisposed)
+                {
+                    gameForm.ShowOpponentPauseMessage(opponentPausedName);
+                }
+            }
+            // Opponent exited
+            else if (message.StartsWith("[EXIT]"))
+            {
+                string opponentExitName = message.Substring(6).Trim();
+                if (gameForm != null && !gameForm.IsDisposed)
+                {
+                    gameForm.ShowOpponentExitMessage(opponentExitName);
+                }
+                inGame = false;
+            }
+            // Server stopped match - PHẢI XỬ LÝ ĐÚNG
+            else if (message.Contains("[STOPMATCH]"))
+            {
+                HandleServerStopMatch();
+            }
+            // Server shutdown
+            else if (message.Contains("Server is shutting down"))
+            {
+                HandleServerStopMatch();
+            }
+        }
+
+        private void HandleServerStopMatch()
+        {
+            if (gameForm != null && !gameForm.IsDisposed && inGame)
+            {
+                // Đóng game form và quay về
+                gameForm.Invoke(new Action(() =>
+                {
+                    MessageBox.Show("Server đã dừng trận đấu. Bạn sẽ quay về form kết nối.", "Trận đấu kết thúc",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    gameForm.Close();
+                }));
+            }
+            inGame = false;
+            
+            // Show lại form kết nối
+            if (!this.Visible)
+            {
+                this.Show();
+            }
+        }
+
+        private void StartChessGame()
+        {
+            if (inGame) return;
+
+            inGame = true;
+            this.Hide();
+
+            gameForm = new ChessGameForm(playerColor, playerName, opponentName);
+            gameForm.OnGameMessage += (msg) => tcpConnection.SendMessage(msg);
+            gameForm.OnGameExited += () =>
+            {
+                inGame = false;
+                if (!this.IsDisposed)
+                {
+                    this.Show();
+                }
+                gameForm = null;
+            };
+
+            gameForm.ShowDialog();
         }
 
         private void TcpConnection_OnConnectionStatusChanged(string status)
@@ -73,6 +168,10 @@ namespace Client
 
         private void DisconnectFromServer()
         {
+            if (inGame && gameForm != null && !gameForm.IsDisposed)
+            {
+                gameForm.Close();
+            }
             tcpConnection.Disconnect();
         }
 
@@ -84,16 +183,13 @@ namespace Client
                 return;
             }
 
-            // Update status label text and color
             bool connected = tcpConnection != null && tcpConnection.IsConnected;
             lblStatus.Text = $"Status: {(connected ? "Connected" : "Disconnected")}";
             lblStatus.ForeColor = connected ? Color.Green : Color.Red;
 
-            // Enable/disable Connect/Disconnect buttons based on connection state
             btnConnect.Enabled = !connected;
             btnDisconnect.Enabled = connected;
 
-            // Append log/message
             lstMessages.Items.Add($"[{DateTime.Now:HH:mm:ss}] {message}");
             lstMessages.TopIndex = lstMessages.Items.Count - 1;
         }
