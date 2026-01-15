@@ -63,23 +63,21 @@
             this.btnExit.Click += new System.EventHandler(this.btnExit_Click);
             
             // pauseLabel
-            this.pauseLabel.AutoSize = false;
+            this.pauseLabel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pauseLabel.BackColor = System.Drawing.Color.Transparent;
             this.pauseLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.pauseLabel.ForeColor = System.Drawing.Color.White;
-            this.pauseLabel.Location = new System.Drawing.Point(0, 0);
             this.pauseLabel.Name = "pauseLabel";
-            this.pauseLabel.Size = new System.Drawing.Size(600, 700);
             this.pauseLabel.TabIndex = 0;
             this.pauseLabel.Text = "Đối thủ đã tạm dừng trận đấu";
             this.pauseLabel.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             
-            // pauseOverlay
-            this.pauseOverlay.BackColor = System.Drawing.Color.FromArgb(128, 0, 0, 0);
+            // pauseOverlay - covers chess board area only
+            this.pauseOverlay.BackColor = System.Drawing.Color.FromArgb(192, 0, 0, 0);
             this.pauseOverlay.Controls.Add(this.pauseLabel);
-            this.pauseOverlay.Location = new System.Drawing.Point(0, 0);
+            this.pauseOverlay.Location = new System.Drawing.Point(20, 50);
             this.pauseOverlay.Name = "pauseOverlay";
-            this.pauseOverlay.Size = new System.Drawing.Size(600, 700);
+            this.pauseOverlay.Size = new System.Drawing.Size(480, 480);
             this.pauseOverlay.TabIndex = 3;
             this.pauseOverlay.Visible = false;
             

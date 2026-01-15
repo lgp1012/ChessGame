@@ -37,6 +37,10 @@ namespace Client
             int boardSize = ChessBoard.BOARD_SIZE * squareSize;
             this.ClientSize = new Size(boardSize + 40, boardSize + 100);
             
+            // Position and size the pause overlay to cover the chess board area
+            pauseOverlay.Location = new Point(20, 50);
+            pauseOverlay.Size = new Size(boardSize, boardSize);
+            
             InitializeChessBoard();
             UpdateTurnDisplay();
             
