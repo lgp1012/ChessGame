@@ -275,6 +275,22 @@ namespace Client
                     int r2 = int.Parse(to[0]);
                     int c2 = int.Parse(to[1]);
                     
+                    // Validate opponent's move before accepting it
+                    PieceColor opponentColor = (playerColor == PieceColor.White) ? PieceColor.Black : PieceColor.White;
+                    ChessPiece movingPiece = chessBoard.GetPiece(r1, c1);
+                    
+                    if (movingPiece == null || movingPiece.Color != opponentColor)
+                    {
+                        MessageBox.Show("Invalid move received from opponent (wrong piece)", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+                    
+                    if (!chessBoard.IsValidMoveSafe(r1, c1, r2, c2))
+                    {
+                        MessageBox.Show("Invalid move received from opponent (illegal move)", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+                    
                     // Thực hiện nước đi của đối thủ
                     chessBoard.MovePiece(r1, c1, r2, c2);
                     UpdateBoardDisplay();
