@@ -28,6 +28,8 @@ namespace ChessGame
             public TcpClient Client { get; set; }
             public StreamWriter Writer { get; set; }
             public string PlayerName { get; set; }
+            public int UdpPort { get; set; }
+            public string IpAddress { get; set; }
         }
 
         public void Start()
@@ -156,7 +158,8 @@ namespace ChessGame
                     Id = clientId,
                     Client = client,
                     Writer = writer,
-                    PlayerName = playerName
+                    PlayerName = playerName,
+                    IpAddress = clientIp
                 };
 
                 lock (connectedClients)
@@ -166,6 +169,9 @@ namespace ChessGame
 
                 OnClientConnected?.Invoke($"{playerName} ({clientIp})");
                 OnLogMessage?.Invoke($"{playerName} connected from {clientIp}");
+                
+                // Khi có 2 client, bắt đầu match và trao đổi thông tin UDP
+                CheckAndStartMatch();
 
                 // Listen for messages from client
                 string line;
@@ -176,6 +182,26 @@ namespace ChessGame
                     {
                         OnLogMessage?.Invoke($"{playerName} sent disconnect signal");
                         break;
+                    }
+                    
+                    // Nhận thông tin UDP port từ client
+                    if (line.StartsWith("[UDP_PORT]"))
+                    {
+                        string portStr = line.Substring(10);
+                        if (int.TryParse(portStr, out int udpPort))
+                        {
+                            lock (connectedClients)
+                            {
+                                if (connectedClients.ContainsKey(clientId))
+                                {
+                                    connectedClients[clientId].UdpPort = udpPort;
+                                    OnLogMessage?.Invoke($"{playerName} UDP port: {udpPort}");
+                                }
+                            }
+                            // Kiểm tra và gửi thông tin UDP nếu đủ 2 client
+                            CheckAndExchangeUdpInfo();
+                        }
+                        continue;
                     }
 
                     OnLogMessage?.Invoke($"{playerName}: {line}");
@@ -262,6 +288,52 @@ namespace ChessGame
                             }
                         }
                         catch { }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Kiểm tra và bắt đầu match khi có 2 client
+        /// </summary>
+        private void CheckAndStartMatch()
+        {
+            lock (connectedClients)
+            {
+                if (connectedClients.Count == 2)
+                {
+                    var clients = connectedClients.Values.ToList();
+                    
+                    // Gán màu cho 2 client
+                    clients[0].Writer.WriteLine("[OPPONENT]|" + clients[1].PlayerName + "|WHITE");
+                    clients[1].Writer.WriteLine("[OPPONENT]|" + clients[0].PlayerName + "|BLACK");
+                    
+                    // Thông báo match bắt đầu
+                    BroadcastCountdown("Match started!");
+                    OnLogMessage?.Invoke("Match started between " + clients[0].PlayerName + " and " + clients[1].PlayerName);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Kiểm tra và trao đổi thông tin UDP khi cả 2 client đã gửi port
+        /// </summary>
+        private void CheckAndExchangeUdpInfo()
+        {
+            lock (connectedClients)
+            {
+                if (connectedClients.Count == 2)
+                {
+                    var clients = connectedClients.Values.ToList();
+                    
+                    // Kiểm tra cả 2 client đã có UDP port
+                    if (clients[0].UdpPort > 0 && clients[1].UdpPort > 0)
+                    {
+                        // Gửi thông tin UDP của đối thủ cho mỗi client
+                        clients[0].Writer.WriteLine($"[UDP_INFO]{clients[1].IpAddress}|{clients[1].UdpPort}");
+                        clients[1].Writer.WriteLine($"[UDP_INFO]{clients[0].IpAddress}|{clients[0].UdpPort}");
+                        
+                        OnLogMessage?.Invoke("UDP info exchanged between clients");
                     }
                 }
             }
