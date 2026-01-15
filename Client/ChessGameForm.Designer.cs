@@ -23,35 +23,35 @@
             this.lblTurn = new System.Windows.Forms.Label();
             this.SuspendLayout();
             
-            // lblTurn
+            // lblTurn - Left side
             this.lblTurn.AutoSize = true;
-            this.lblTurn.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblTurn.Location = new System.Drawing.Point(20, 20);
+            this.lblTurn.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblTurn.Location = new System.Drawing.Point(20, 15);
             this.lblTurn.Name = "lblTurn";
-            this.lblTurn.Size = new System.Drawing.Size(120, 26);
+            this.lblTurn.Size = new System.Drawing.Size(120, 24);
             this.lblTurn.TabIndex = 0;
             this.lblTurn.Text = "Your Turn";
             this.lblTurn.ForeColor = System.Drawing.Color.Green;
             
-            // btnPause
+            // btnPause - Right side, next to btnExit
             this.btnPause.BackColor = System.Drawing.Color.Orange;
-            this.btnPause.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnPause.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnPause.ForeColor = System.Drawing.Color.White;
-            this.btnPause.Location = new System.Drawing.Point(20, 55);
+            this.btnPause.Location = new System.Drawing.Point(360, 10);
             this.btnPause.Name = "btnPause";
-            this.btnPause.Size = new System.Drawing.Size(110, 35);
+            this.btnPause.Size = new System.Drawing.Size(100, 35);
             this.btnPause.TabIndex = 1;
             this.btnPause.Text = "Pause";
             this.btnPause.UseVisualStyleBackColor = false;
             this.btnPause.Click += new System.EventHandler(this.btnPause_Click);
             
-            // btnExit
+            // btnExit - Right side, rightmost
             this.btnExit.BackColor = System.Drawing.Color.Red;
-            this.btnExit.Font = new System.Drawing.Font("Microsoft Sans Serif", 11F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnExit.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnExit.ForeColor = System.Drawing.Color.White;
-            this.btnExit.Location = new System.Drawing.Point(140, 55);
+            this.btnExit.Location = new System.Drawing.Point(470, 10);
             this.btnExit.Name = "btnExit";
-            this.btnExit.Size = new System.Drawing.Size(110, 35);
+            this.btnExit.Size = new System.Drawing.Size(100, 35);
             this.btnExit.TabIndex = 2;
             this.btnExit.Text = "Exit";
             this.btnExit.UseVisualStyleBackColor = false;

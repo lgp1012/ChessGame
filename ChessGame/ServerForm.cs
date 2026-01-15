@@ -241,6 +241,12 @@ namespace ChessGame
                 btnStartMatch.Enabled = false;
                 UpdateUI();
 
+                // Gọi StartMatch trên TcpServer để log
+                if (tcpServer != null)
+                {
+                    tcpServer.StartMatch();
+                }
+
                 StartCountdown(5);
             }
         }
