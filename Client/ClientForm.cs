@@ -112,9 +112,21 @@ namespace Client
                 string opponentExitName = message.Substring(6).Trim();
                 if (gameForm != null && !gameForm.IsDisposed)
                 {
-                    gameForm.ShowOpponentExitMessage(opponentExitName);
+                    gameForm.Invoke(new Action(() =>
+                    {
+                        MessageBox.Show($"{opponentExitName} đã thoát ván đấu. Ván đấu kết thúc!", 
+                            "Đối thủ thoát", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        gameForm.Close();
+                    }));
                 }
                 inGame = false;
+                
+                // Cleanup UDP client
+                if (udpClient != null)
+                {
+                    udpClient.Stop();
+                    udpClient = null;
+                }
             }
             // Server stopped match - PHẢI XỬ LÝ ĐÚNG
             else if (message.Contains("[STOPMATCH]"))
@@ -156,12 +168,19 @@ namespace Client
                 // Đóng game form và quay về
                 gameForm.Invoke(new Action(() =>
                 {
-                    MessageBox.Show("Server đã dừng trận đấu. Bạn sẽ quay về form kết nối.", "Trận đấu kết thúc",
+                    MessageBox.Show("Server đã dừng trận đấu!", "Match Stopped",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
                     gameForm.Close();
                 }));
             }
             inGame = false;
+            
+            // Cleanup UDP client
+            if (udpClient != null)
+            {
+                udpClient.Stop();
+                udpClient = null;
+            }
             
             // Show lại form kết nối
             if (!this.Visible)
