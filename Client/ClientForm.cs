@@ -155,10 +155,16 @@ namespace Client
                     {
                         gameForm.Close();
                     }
-                    catch { }
+                    catch (Exception ex2)
+                    {
+                        // Log fallback error - form may already be disposed
+                        System.Diagnostics.Debug.WriteLine($"Error in fallback close: {ex2.Message}");
+                    }
                 }
                 finally
                 {
+                    // Always clear the reference since form is closing/closed
+                    // This prevents retaining references to disposed forms
                     gameForm = null;
                 }
             }
