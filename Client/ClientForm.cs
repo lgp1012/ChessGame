@@ -111,7 +111,7 @@ namespace Client
                 }
                 inGame = false;
                 
-                // Show ClientForm again  
+                // Hiển thị lại ClientForm
                 this.Show();
             }
             // Server stopped match - PHẢI XỬ LÝ ĐÚNG
@@ -128,6 +128,12 @@ namespace Client
 
         private void HandleServerStopMatch()
         {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => HandleServerStopMatch()));
+                return;
+            }
+
             if (gameForm != null && !gameForm.IsDisposed && inGame)
             {
                 // Đóng game form và quay về
