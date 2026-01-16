@@ -114,17 +114,32 @@ namespace Client
 
         private void HandleServerStopMatch()
         {
-            // Xử lý trực tiếp trên gameForm nếu đang mở
-            if (gameForm != null && !gameForm.IsDisposed && inGame)
+            // Set inGame = false FIRST to prevent race conditions
+            inGame = false;
+            
+            // Close game form if it's open
+            if (gameForm != null && !gameForm.IsDisposed)
             {
-                // Gọi method trên gameForm - nó sẽ tự xử lý InvokeRequired
-                gameForm.GameStoppedByServer();
+                try
+                {
+                    gameForm.GameStoppedByServer();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error closing game form: {ex.Message}");
+                    // Fallback: try to close directly
+                    try { gameForm.Close(); } catch { }
+                }
+                finally
+                {
+                    gameForm = null;
+                }
             }
-            else
-            {
-                inGame = false;
-                this.Show();
-            }
+            
+            // Ensure ClientForm is shown and brought to front
+            this.Show();
+            this.BringToFront();
+            this.Activate();
         }
 
         private void StartChessGame()
