@@ -106,14 +106,22 @@ namespace ChessGame
                 return;
             }
 
-            // Gửi message STOPMATCH đến tất cả clients TRƯỚC
+            System.Diagnostics.Debug.WriteLine("[SERVER] Stop Match button clicked");
+            
+            // Gửi message STOPMATCH qua CẢ TCP VÀ UDP để đảm bảo clients nhận được ngay
             if (tcpServer != null)
             {
+                System.Diagnostics.Debug.WriteLine("[SERVER] Broadcasting [STOPMATCH] via TCP");
                 tcpServer.BroadcastCountdown("[STOPMATCH]");
+                
+                System.Diagnostics.Debug.WriteLine("[SERVER] Broadcasting [STOPMATCH] via UDP");
+                tcpServer.BroadcastUdpMessage("[STOPMATCH]");
+                
+                System.Diagnostics.Debug.WriteLine("[SERVER] [STOPMATCH] broadcast completed");
             }
 
             // Đợi 1 chút để clients nhận message
-            System.Threading.Thread.Sleep(100);
+            System.Threading.Thread.Sleep(200);
 
             matchStarted = false;
 

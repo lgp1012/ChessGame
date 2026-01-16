@@ -15,6 +15,7 @@ namespace Client
         private bool isPaused = false;
         private bool isPausedByMe = false; // Track if I initiated the pause
         private bool isBlockedByOpponent = false; // Track if opponent paused the game
+        private bool gameExitedTriggered = false; // Flag để tránh trigger OnGameExited event 2 lần
         private Button[,] cells;
         private int selectedRow = -1;
         private int selectedCol = -1;
@@ -367,9 +368,34 @@ namespace Client
                 return;
             }
 
+            System.Diagnostics.Debug.WriteLine($"[ChessGameForm] Received UDP message: {message}");
+
             if (message == "[CHECKMATE]")
             {
                 MessageBox.Show("Đối thủ đã chiếu bí bạn!", "Game Over", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else if (message == "[STOPMATCH]")
+            {
+                System.Diagnostics.Debug.WriteLine("[ChessGameForm] Received STOPMATCH via UDP - calling GameStoppedByServer");
+                GameStoppedByServer();
+            }
+            else if (message.StartsWith("[PAUSE]"))
+            {
+                string pausedPlayerName = message.Substring(7); // Lấy tên người pause
+                System.Diagnostics.Debug.WriteLine($"[ChessGameForm] Received PAUSE from {pausedPlayerName} via UDP");
+                ShowOpponentPauseMessage(pausedPlayerName);
+            }
+            else if (message.StartsWith("[RESUME]"))
+            {
+                string resumedPlayerName = message.Substring(8); // Lấy tên người resume
+                System.Diagnostics.Debug.WriteLine($"[ChessGameForm] Received RESUME from {resumedPlayerName} via UDP");
+                HideOpponentPauseOverlay();
+            }
+            else if (message.StartsWith("[EXIT]"))
+            {
+                string exitPlayerName = message.Substring(6); // Lấy tên người exit
+                System.Diagnostics.Debug.WriteLine($"[ChessGameForm] Received EXIT from {exitPlayerName} via UDP");
+                ShowOpponentExitMessage(exitPlayerName);
             }
         }
 
@@ -385,7 +411,19 @@ namespace Client
                 {
                     isPaused = true;
                     isPausedByMe = true;
+                    
+                    // Hiển thị overlay cho chính mình
+                    ShowMyPauseOverlay();
+                    
+                    // Gửi message qua CẢ TCP VÀ UDP để đối thủ nhận được ngay
                     OnGameMessage?.Invoke($"[PAUSE]{playerName}");
+                    
+                    // Gửi qua UDP để đảm bảo nhận nhanh
+                    if (udpClient != null)
+                    {
+                        udpClient.SendMessage($"[PAUSE]{playerName}");
+                    }
+                    
                     btnPause.Text = "Resume";
                     btnPause.BackColor = Color.Green;
                     UpdateTurnDisplay();
@@ -396,7 +434,19 @@ namespace Client
                 // Currently paused by me, resume
                 isPaused = false;
                 isPausedByMe = false;
+                
+                // Ẩn overlay của chính mình
+                HideMyPauseOverlay();
+                
+                // Gửi message qua CẢ TCP VÀ UDP để đối thủ nhận được ngay
                 OnGameMessage?.Invoke($"[RESUME]{playerName}");
+                
+                // Gửi qua UDP để đảm bảo nhận nhanh
+                if (udpClient != null)
+                {
+                    udpClient.SendMessage($"[RESUME]{playerName}");
+                }
+                
                 btnPause.Text = "Pause";
                 btnPause.BackColor = Color.Orange;
                 UpdateTurnDisplay();
@@ -410,7 +460,15 @@ namespace Client
 
             if (result == DialogResult.Yes)
             {
+                // Gửi message qua CẢ TCP VÀ UDP để đối thủ nhận được ngay
                 OnGameMessage?.Invoke($"[EXIT]{playerName}");
+                
+                // Gửi qua UDP để đảm bảo nhận nhanh
+                if (udpClient != null)
+                {
+                    udpClient.SendMessage($"[EXIT]{playerName}");
+                }
+                
                 OnGameExited?.Invoke();
                 this.Close();
             }
@@ -432,7 +490,7 @@ namespace Client
 
             isPaused = true;
             isBlockedByOpponent = true;
-            pauseLabel.Text = $"{opponentPausedName} đã tạm dừng trận đấu.\nVui lòng chờ...";
+            pauseLabel.Text = $"Match is paused by {opponentPausedName}";
             pauseOverlay.Visible = true;
             pauseOverlay.BringToFront();
             
@@ -447,6 +505,50 @@ namespace Client
             }
             
             UpdateTurnDisplay();
+        }
+
+        private void ShowMyPauseOverlay()
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => ShowMyPauseOverlay()));
+                return;
+            }
+
+            pauseLabel.Text = $"Match is paused by {playerName}";
+            pauseOverlay.Visible = true;
+            pauseOverlay.BringToFront();
+            
+            // Disable all cell buttons
+            if (cells != null)
+            {
+                foreach (var btn in cells)
+                {
+                    if (btn != null)
+                        btn.Enabled = false;
+                }
+            }
+        }
+
+        private void HideMyPauseOverlay()
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => HideMyPauseOverlay()));
+                return;
+            }
+
+            pauseOverlay.Visible = false;
+            
+            // Enable all cell buttons
+            if (cells != null)
+            {
+                foreach (var btn in cells)
+                {
+                    if (btn != null)
+                        btn.Enabled = true;
+                }
+            }
         }
 
         public void HideOpponentPauseOverlay()
@@ -476,32 +578,65 @@ namespace Client
 
         public void ShowOpponentExitMessage(string opponentExitName)
         {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => ShowOpponentExitMessage(opponentExitName)));
+                return;
+            }
+
             MessageBox.Show($"{opponentExitName} đã thoát ván đấu. Ván đấu kết thúc!", "Đối thủ thoát",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
+            
             OnGameExited?.Invoke();
             this.Close();
         }
 
+
         public void GameStoppedByServer()
         {
+            System.Diagnostics.Debug.WriteLine("[ChessGameForm] GameStoppedByServer called");
+            
             if (InvokeRequired)
             {
+                System.Diagnostics.Debug.WriteLine("[ChessGameForm] InvokeRequired = true, invoking...");
                 Invoke(new Action(() => GameStoppedByServer()));
                 return;
             }
 
+            System.Diagnostics.Debug.WriteLine("[ChessGameForm] Showing MessageBox and closing form");
+            
             MessageBox.Show("Server đã dừng trận đấu. Bạn sẽ quay về form kết nối.", "Trận đấu kết thúc",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
             
-            OnGameExited?.Invoke();
+            if (!gameExitedTriggered)
+            {
+                System.Diagnostics.Debug.WriteLine("[ChessGameForm] Invoking OnGameExited event");
+                gameExitedTriggered = true;
+                OnGameExited?.Invoke();
+            }
+            
+            System.Diagnostics.Debug.WriteLine("[ChessGameForm] Setting DialogResult and closing");
             this.DialogResult = DialogResult.Abort;
             this.Close();
+            
+            System.Diagnostics.Debug.WriteLine("[ChessGameForm] Form closed");
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             base.OnFormClosing(e);
-            OnGameExited?.Invoke();
+            
+            // Chỉ trigger OnGameExited nếu chưa được trigger
+            if (!gameExitedTriggered)
+            {
+                System.Diagnostics.Debug.WriteLine("[ChessGameForm] OnFormClosing - triggering OnGameExited");
+                gameExitedTriggered = true;
+                OnGameExited?.Invoke();
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[ChessGameForm] OnFormClosing - OnGameExited already triggered, skipping");
+            }
         }
     }
 }

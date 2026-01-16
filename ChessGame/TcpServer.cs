@@ -143,7 +143,8 @@ namespace ChessGame
             {
                 client.NoDelay = true;
                 NetworkStream networkStream = client.GetStream();
-                networkStream.ReadTimeout = 5000;
+                // Loại bỏ ReadTimeout để stream không bị timeout
+                // networkStream.ReadTimeout = 5000;
 
                 writer = new StreamWriter(networkStream, Encoding.UTF8) { AutoFlush = true };
                 reader = new StreamReader(networkStream, Encoding.UTF8);
@@ -292,6 +293,7 @@ namespace ChessGame
         {
             lock (connectedClients)
             {
+                System.Diagnostics.Debug.WriteLine($"[TcpServer] Broadcasting: '{message}' to {connectedClients.Count} clients");
                 foreach (var clientConn in connectedClients.Values.ToList())
                 {
                     try
@@ -299,6 +301,8 @@ namespace ChessGame
                         if (clientConn.Writer != null)
                         {
                             clientConn.Writer.WriteLine(message);
+                            clientConn.Writer.Flush(); // Force flush để đảm bảo message được gửi ngay
+                            System.Diagnostics.Debug.WriteLine($"[TcpServer] Sent to {clientConn.PlayerName}");
                         }
                     }
                     catch (Exception ex)
@@ -306,6 +310,7 @@ namespace ChessGame
                         OnLogMessage?.Invoke($"Error sending to {clientConn.PlayerName}: {ex.Message}");
                     }
                 }
+                System.Diagnostics.Debug.WriteLine($"[TcpServer] Broadcast completed");
             }
         }
 
@@ -330,6 +335,46 @@ namespace ChessGame
                         catch { }
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Gửi message qua UDP trực tiếp đến tất cả clients (dùng cho STOPMATCH để đảm bảo nhận nhanh)
+        /// </summary>
+        public void BroadcastUdpMessage(string message)
+        {
+            lock (connectedClients)
+            {
+                System.Diagnostics.Debug.WriteLine($"[TcpServer] Broadcasting UDP: '{message}' to {connectedClients.Count} clients");
+                
+                using (UdpClient udpSender = new UdpClient())
+                {
+                    byte[] data = Encoding.UTF8.GetBytes(message);
+                    
+                    foreach (var clientConn in connectedClients.Values.ToList())
+                    {
+                        try
+                        {
+                            if (clientConn.UdpPort > 0 && !string.IsNullOrEmpty(clientConn.IpAddress))
+                            {
+                                IPEndPoint endpoint = new IPEndPoint(IPAddress.Parse(clientConn.IpAddress), clientConn.UdpPort);
+                                udpSender.Send(data, data.Length, endpoint);
+                                System.Diagnostics.Debug.WriteLine($"[TcpServer] Sent UDP to {clientConn.PlayerName} at {clientConn.IpAddress}:{clientConn.UdpPort}");
+                            }
+                            else
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[TcpServer] Cannot send UDP to {clientConn.PlayerName} - no UDP port info");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[TcpServer] Exception sending UDP to {clientConn.PlayerName}: {ex.Message}");
+                            OnLogMessage?.Invoke($"Error sending UDP to {clientConn.PlayerName}: {ex.Message}");
+                        }
+                    }
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"[TcpServer] UDP Broadcast completed");
             }
         }
 

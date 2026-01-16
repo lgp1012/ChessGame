@@ -131,6 +131,8 @@ namespace Client
             // Server stopped match - PHẢI XỬ LÝ ĐÚNG
             else if (message.Contains("[STOPMATCH]"))
             {
+                System.Diagnostics.Debug.WriteLine("[CLIENT] Received STOPMATCH message!");
+                UpdateUI("[DEBUG] Received STOPMATCH from server");
                 HandleServerStopMatch();
             }
             // Server shutdown
@@ -163,55 +165,43 @@ namespace Client
 
         private void HandleServerStopMatch()
         {
+            System.Diagnostics.Debug.WriteLine("[CLIENT] HandleServerStopMatch called");
+            System.Diagnostics.Debug.WriteLine($"[CLIENT] gameForm null? {gameForm == null}, disposed? {gameForm?.IsDisposed}, inGame? {inGame}");
+            
             if (gameForm != null && !gameForm.IsDisposed && inGame)
             {
-                // Đóng game form và quay về
-                if (gameForm.InvokeRequired)
+                System.Diagnostics.Debug.WriteLine("[CLIENT] Calling GameStoppedByServer on gameForm");
+                // Gọi phương thức có sẵn trong ChessGameForm
+                // GameStoppedByServer sẽ tự động trigger OnGameExited event
+                // OnGameExited event handler sẽ lo việc cleanup và show ClientForm
+                gameForm.GameStoppedByServer();
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("[CLIENT] gameForm is null, disposed, or not in game - showing ClientForm");
+                // Nếu không có gameForm, chỉ cần show ClientForm
+                inGame = false;
+                
+                if (InvokeRequired)
                 {
-                    gameForm.Invoke(new Action(() =>
+                    Invoke(new Action(() =>
                     {
-                        MessageBox.Show("Server đã dừng trận đấu. Bạn sẽ quay về form kết nối.", "Match Stopped",
-                            MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        gameForm.DialogResult = DialogResult.Abort;
-                        gameForm.Close();
+                        if (!this.Visible)
+                        {
+                            this.Show();
+                        }
                     }));
                 }
                 else
-                {
-                    MessageBox.Show("Server đã dừng trận đấu. Bạn sẽ quay về form kết nối.", "Match Stopped",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    gameForm.DialogResult = DialogResult.Abort;
-                    gameForm.Close();
-                }
-            }
-            
-            inGame = false;
-            
-            // Cleanup UDP client
-            if (udpClient != null)
-            {
-                udpClient.Stop();
-                udpClient = null;
-            }
-            
-            // Show lại form kết nối
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() =>
                 {
                     if (!this.Visible)
                     {
                         this.Show();
                     }
-                }));
-            }
-            else
-            {
-                if (!this.Visible)
-                {
-                    this.Show();
                 }
             }
+            
+            System.Diagnostics.Debug.WriteLine("[CLIENT] HandleServerStopMatch completed");
         }
 
         private void StartChessGame()

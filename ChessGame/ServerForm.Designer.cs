@@ -79,14 +79,15 @@
             // 
             // lblMatchStatus
             // 
-            this.lblMatchStatus.AutoSize = true;
-            this.lblMatchStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblMatchStatus.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.lblMatchStatus.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblMatchStatus.ForeColor = System.Drawing.Color.Black;
-            this.lblMatchStatus.Location = new System.Drawing.Point(113, 360);
+            this.lblMatchStatus.Location = new System.Drawing.Point(12, 355);
             this.lblMatchStatus.Name = "lblMatchStatus";
-            this.lblMatchStatus.Size = new System.Drawing.Size(251, 29);
+            this.lblMatchStatus.Size = new System.Drawing.Size(444, 48);
             this.lblMatchStatus.TabIndex = 5;
             this.lblMatchStatus.Text = "Waiting for players...";
+            this.lblMatchStatus.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // btnStartServer
             // 
@@ -161,12 +162,12 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.WhiteSmoke;
             this.ClientSize = new System.Drawing.Size(468, 447);
-            this.Controls.Add(this.msgServer);
-            this.Controls.Add(this.btnStartMatch);
-            this.Controls.Add(this.btnEndServer);
-            this.Controls.Add(this.btnStopMatch);
-            this.Controls.Add(this.btnStartServer);
             this.Controls.Add(this.lblMatchStatus);
+            this.Controls.Add(this.btnStartMatch);
+            this.Controls.Add(this.btnStopMatch);
+            this.Controls.Add(this.msgServer);
+            this.Controls.Add(this.btnStartServer);
+            this.Controls.Add(this.btnEndServer);
             this.Controls.Add(this.lblConnectClient);
             this.Controls.Add(this.NameGame);
             this.Controls.Add(this.lblServerStatus);

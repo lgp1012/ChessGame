@@ -48,7 +48,8 @@ namespace Client
                 await tcpClient.ConnectAsync(serverIP, SERVER_PORT);
                 
                 stream = tcpClient.GetStream();
-                stream.ReadTimeout = 5000;
+                // Loại bỏ ReadTimeout để stream không bị timeout
+                // stream.ReadTimeout = 5000;
                 
                 writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
                 isConnected = true;
