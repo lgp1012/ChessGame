@@ -166,13 +166,25 @@ namespace Client
             if (gameForm != null && !gameForm.IsDisposed && inGame)
             {
                 // Đóng game form và quay về
-                gameForm.Invoke(new Action(() =>
+                if (gameForm.InvokeRequired)
                 {
-                    MessageBox.Show("Server đã dừng trận đấu!", "Match Stopped",
+                    gameForm.Invoke(new Action(() =>
+                    {
+                        MessageBox.Show("Server đã dừng trận đấu. Bạn sẽ quay về form kết nối.", "Match Stopped",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        gameForm.DialogResult = DialogResult.Abort;
+                        gameForm.Close();
+                    }));
+                }
+                else
+                {
+                    MessageBox.Show("Server đã dừng trận đấu. Bạn sẽ quay về form kết nối.", "Match Stopped",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    gameForm.DialogResult = DialogResult.Abort;
                     gameForm.Close();
-                }));
+                }
             }
+            
             inGame = false;
             
             // Cleanup UDP client
@@ -183,9 +195,22 @@ namespace Client
             }
             
             // Show lại form kết nối
-            if (!this.Visible)
+            if (InvokeRequired)
             {
-                this.Show();
+                Invoke(new Action(() =>
+                {
+                    if (!this.Visible)
+                    {
+                        this.Show();
+                    }
+                }));
+            }
+            else
+            {
+                if (!this.Visible)
+                {
+                    this.Show();
+                }
             }
         }
 

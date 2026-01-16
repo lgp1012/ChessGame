@@ -117,8 +117,8 @@ namespace ChessGame
 
             matchStarted = false;
 
-            lblMatchStatus.Text = "Match paused by server";
-            msgServer.Items.Add($"[{DateTime.Now:HH:mm:ss}] Match stopped by server");
+            lblMatchStatus.Text = "Match stopped. Clients returned to lobby.";
+            msgServer.Items.Add($"[{DateTime.Now:HH:mm:ss}] Match stopped by server - Clients returned to connection form");
             UpdateUI();
         }
 
