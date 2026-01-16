@@ -495,7 +495,8 @@ namespace Client
             base.OnFormClosing(e);
             
             // Only invoke OnGameExited if NOT closing from server
-            // (because HandleServerStopMatch already handles showing ClientForm)
+            // When closing from server, HandleServerStopMatch in ClientForm
+            // already handles showing and activating the ClientForm
             if (!isClosingFromServer)
             {
                 OnGameExited?.Invoke();
