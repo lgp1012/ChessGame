@@ -15,6 +15,7 @@ namespace Client
         private bool isPaused = false;
         private bool isPausedByMe = false; // Track if I initiated the pause
         private bool isBlockedByOpponent = false; // Track if opponent paused the game
+        private bool isClosingFromServer = false;
         private Button[,] cells;
         private int selectedRow = -1;
         private int selectedCol = -1;
@@ -480,10 +481,11 @@ namespace Client
                 return;
             }
 
+            isClosingFromServer = true;
+            
             MessageBox.Show("Server đã dừng trận đấu. Bạn sẽ quay về form kết nối.", "Trận đấu kết thúc",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
             
-            OnGameExited?.Invoke();
             this.DialogResult = DialogResult.Abort;
             this.Close();
         }
@@ -491,7 +493,13 @@ namespace Client
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             base.OnFormClosing(e);
-            OnGameExited?.Invoke();
+            
+            // Only invoke OnGameExited if NOT closing from server
+            // (because HandleServerStopMatch already handles showing ClientForm)
+            if (!isClosingFromServer)
+            {
+                OnGameExited?.Invoke();
+            }
         }
     }
 }

@@ -134,20 +134,39 @@ namespace Client
                 return;
             }
 
-            if (gameForm != null && !gameForm.IsDisposed && inGame)
-            {
-                // Đóng game form và quay về
-                gameForm.Invoke(new Action(() =>
-                {
-                    MessageBox.Show("Server đã dừng trận đấu!", "Match Stopped",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    gameForm.Close();
-                }));
-            }
+            // Set inGame = false first
             inGame = false;
+
+            // Check and close game form if open
+            if (gameForm != null && !gameForm.IsDisposed)
+            {
+                try
+                {
+                    // Use the existing GameStoppedByServer() method
+                    gameForm.GameStoppedByServer();
+                }
+                catch (Exception ex)
+                {
+                    // Log error if needed
+                    System.Diagnostics.Debug.WriteLine($"Error closing game form: {ex.Message}");
+                    
+                    // Fallback: try to close form directly
+                    try
+                    {
+                        gameForm.Close();
+                    }
+                    catch { }
+                }
+                finally
+                {
+                    gameForm = null;
+                }
+            }
             
-            // Show lại form kết nối
+            // Show the connection form again
             this.Show();
+            this.BringToFront();
+            this.Activate();
         }
 
         private void StartChessGame()
