@@ -111,15 +111,8 @@ namespace Client
                 }
                 inGame = false;
                 
-                // Show ClientForm again
-                if (InvokeRequired)
-                {
-                    Invoke(new Action(() => this.Show()));
-                }
-                else
-                {
-                    this.Show();
-                }
+                // Show ClientForm again  
+                this.Show();
             }
             // Server stopped match - PHẢI XỬ LÝ ĐÚNG
             else if (message.Contains("[STOPMATCH]"))
@@ -135,12 +128,6 @@ namespace Client
 
         private void HandleServerStopMatch()
         {
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() => HandleServerStopMatch()));
-                return;
-            }
-
             if (gameForm != null && !gameForm.IsDisposed && inGame)
             {
                 // Đóng game form và quay về
@@ -154,10 +141,7 @@ namespace Client
             inGame = false;
             
             // Show lại form kết nối
-            if (!this.Visible)
-            {
-                this.Show();
-            }
+            this.Show();
         }
 
         private void StartChessGame()
