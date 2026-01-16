@@ -434,7 +434,8 @@ namespace Client
         {
             if (InvokeRequired)
             {
-                // Use Invoke instead of BeginInvoke for synchronous execution
+                // Use Invoke instead of BeginInvoke for synchronous execution to prevent race conditions
+                // and ensure form closes properly before ClientForm attempts to show itself
                 Invoke(new Action(() => GameStoppedByServer()));
                 return;
             }
