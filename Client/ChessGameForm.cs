@@ -434,11 +434,15 @@ namespace Client
         {
             if (InvokeRequired)
             {
-                BeginInvoke(new Action(() => GameStoppedByServer()));
+                // Use Invoke instead of BeginInvoke for synchronous execution to prevent race conditions
+                // and ensure form closes properly before ClientForm attempts to show itself
+                Invoke(new Action(() => GameStoppedByServer()));
                 return;
             }
 
+            // Prevent sending EXIT message and double-raising events
             shouldNotifyExit = false;
+            exitEventRaised = true; // Prevent OnFormClosing from raising event again
             
             MessageBox.Show("Server đã dừng trận đấu.\nBạn sẽ quay về form kết nối.", "Trận đấu kết thúc",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
