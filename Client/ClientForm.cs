@@ -1,11 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Client
@@ -25,7 +19,7 @@ namespace Client
             InitializeComponent();
             playerName = name;
             serverIP = ip;
-            
+
             if (!string.IsNullOrEmpty(playerName))
             {
                 this.Text = $"Chess Game - {playerName}";
@@ -43,29 +37,33 @@ namespace Client
 
         private void TcpConnection_OnMessageReceived(string message)
         {
-            // Xử lý trên UI thread
+            // Sử dụng BeginInvoke để không bị block khi ShowDialog đang chạy
             if (InvokeRequired)
             {
-                Invoke(new Action(() => TcpConnection_OnMessageReceived(message)));
+                BeginInvoke(new Action(() => TcpConnection_OnMessageReceived(message)));
                 return;
             }
 
             UpdateUI($"[Server] {message}");
 
-            // Match started
             if (message.Contains("Match started!"))
             {
-                // Match will start when we have opponent info
+                // wait for opponent info
             }
-            // MOVE message from server - relay to game form
             else if (message.StartsWith("[MOVE]"))
             {
                 if (gameForm != null && !gameForm.IsDisposed)
                 {
-                    gameForm.Invoke(new Action(() => gameForm.HandleOpponentMove(message)));
+                    gameForm.HandleOpponentMove(message);
                 }
             }
-            // Opponent info
+            else if (message.StartsWith("[TURN]"))
+            {
+                if (gameForm != null && !gameForm.IsDisposed)
+                {
+                    gameForm.SetTurn(true);
+                }
+            }
             else if (message.StartsWith("[OPPONENT]"))
             {
                 string[] parts = message.Split('|');
@@ -73,12 +71,9 @@ namespace Client
                 {
                     opponentName = parts[1].Trim();
                     playerColor = parts[2].Trim() == "WHITE" ? PieceColor.White : PieceColor.Black;
-                    
-                    // Start game immediately after receiving opponent info
                     StartChessGame();
                 }
             }
-            // Opponent paused
             else if (message.StartsWith("[PAUSE]"))
             {
                 string opponentPausedName = message.Substring(7).Trim();
@@ -87,39 +82,30 @@ namespace Client
                     gameForm.ShowOpponentPauseMessage(opponentPausedName);
                 }
             }
-            // Opponent resumed
             else if (message.StartsWith("[RESUME]"))
             {
-                string opponentResumedName = message.Substring(8).Trim();
                 if (gameForm != null && !gameForm.IsDisposed)
                 {
                     gameForm.HideOpponentPauseOverlay();
                 }
             }
-            // Opponent exited
             else if (message.StartsWith("[EXIT]"))
             {
                 string opponentExitName = message.Substring(6).Trim();
                 if (gameForm != null && !gameForm.IsDisposed)
                 {
-                    gameForm.Invoke(new Action(() =>
-                    {
-                        MessageBox.Show($"{opponentExitName} đã thoát ván đấu. Ván đấu kết thúc!", 
-                            "Đối thủ thoát", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        gameForm.Close();
-                    }));
+                    gameForm.DisableExitNotification();
+                    MessageBox.Show($"{opponentExitName} đã thoát ván đấu.\nVán đấu kết thúc!",
+                        "Đối thủ thoát", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    gameForm.Close();
                 }
                 inGame = false;
-                
-                // Hiển thị lại ClientForm
                 this.Show();
             }
-            // Server stopped match - PHẢI XỬ LÝ ĐÚNG
             else if (message.Contains("[STOPMATCH]"))
             {
                 HandleServerStopMatch();
             }
-            // Server shutdown
             else if (message.Contains("Server is shutting down"))
             {
                 HandleServerStopMatch();
@@ -128,26 +114,17 @@ namespace Client
 
         private void HandleServerStopMatch()
         {
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() => HandleServerStopMatch()));
-                return;
-            }
-
+            // Xử lý trực tiếp trên gameForm nếu đang mở
             if (gameForm != null && !gameForm.IsDisposed && inGame)
             {
-                // Đóng game form và quay về
-                gameForm.Invoke(new Action(() =>
-                {
-                    MessageBox.Show("Server đã dừng trận đấu!", "Match Stopped",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    gameForm.Close();
-                }));
+                // Gọi method trên gameForm - nó sẽ tự xử lý InvokeRequired
+                gameForm.GameStoppedByServer();
             }
-            inGame = false;
-            
-            // Show lại form kết nối
-            this.Show();
+            else
+            {
+                inGame = false;
+                this.Show();
+            }
         }
 
         private void StartChessGame()
@@ -166,7 +143,6 @@ namespace Client
                 {
                     this.Show();
                 }
-                
                 gameForm = null;
             };
 
@@ -202,6 +178,7 @@ namespace Client
         {
             if (inGame && gameForm != null && !gameForm.IsDisposed)
             {
+                gameForm.DisableExitNotification();
                 gameForm.Close();
             }
             tcpConnection.Disconnect();

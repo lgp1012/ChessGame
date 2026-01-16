@@ -1,12 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace ChessGame
@@ -60,7 +54,7 @@ namespace ChessGame
                 if (clientList.ContainsKey(playerName))
                 {
                     clientList.Remove(playerName);
-                    
+
                     string timestamp = DateTime.Now.ToString("HH:mm:ss");
                     string displayText = $"[{timestamp}] {playerName} disconnected";
                     msgServer.Items.Add(displayText);
@@ -91,33 +85,19 @@ namespace ChessGame
             }
 
             lblConnectClient.Text = $"Connected clients: {connectedClients} / 2";
-
-            // Start Match chỉ enabled khi: server running, 2 clients, chưa match, không đang countdown
             btnStartMatch.Enabled = serverRunning && connectedClients == 2 && !matchStarted && (countdownTimer == null || !countdownTimer.Enabled);
-
-            // Stop Match chỉ enabled khi match đã started
             btnStopMatch.Enabled = matchStarted;
         }
 
         private void btnStopMatch_Click(object sender, EventArgs e)
         {
-            if (!matchStarted)
-            {
-                return;
-            }
+            if (!matchStarted) return;
 
-            // Gửi message STOPMATCH đến tất cả clients TRƯỚC
-            if (tcpServer != null)
-            {
-                tcpServer.BroadcastCountdown("[STOPMATCH]");
-            }
-
-            // Đợi 1 chút để clients nhận message
+            tcpServer?.BroadcastCountdown("[STOPMATCH]");
             System.Threading.Thread.Sleep(100);
 
             matchStarted = false;
-
-            lblMatchStatus.Text = "Match paused by server";
+            lblMatchStatus.Text = "Ván đấu đã kết thúc";
             msgServer.Items.Add($"[{DateTime.Now:HH:mm:ss}] Match stopped by server");
             UpdateUI();
         }
@@ -139,10 +119,10 @@ namespace ChessGame
             tcpServer.OnClientPaused += TcpServer_OnClientPaused;
             tcpServer.OnClientResumed += TcpServer_OnClientResumed;
             tcpServer.OnClientExited += TcpServer_OnClientExited;
+            tcpServer.OnMatchEnded += TcpServer_OnMatchEnded;
             tcpServer.Start();
 
             msgServer.Items.Add($"[{DateTime.Now:HH:mm:ss}] Server started");
-
             UpdateUI();
         }
 
@@ -155,7 +135,6 @@ namespace ChessGame
                 countdownTimer = null;
             }
 
-            // Gửi message STOPMATCH nếu đang trong game
             if (matchStarted && tcpServer != null)
             {
                 tcpServer.BroadcastCountdown("[STOPMATCH]");
@@ -172,6 +151,7 @@ namespace ChessGame
                 tcpServer.OnClientPaused -= TcpServer_OnClientPaused;
                 tcpServer.OnClientResumed -= TcpServer_OnClientResumed;
                 tcpServer.OnClientExited -= TcpServer_OnClientExited;
+                tcpServer.OnMatchEnded -= TcpServer_OnMatchEnded;
                 tcpServer = null;
             }
 
@@ -197,26 +177,18 @@ namespace ChessGame
 
             countdownSeconds = seconds;
             lblMatchStatus.Text = $"Match starts in {countdownSeconds} seconds...";
-            
-            if (tcpServer != null)
-            {
-                tcpServer.BroadcastCountdown($"Match starts in {countdownSeconds} seconds...");
-            }
 
+            tcpServer?.BroadcastCountdown($"Match starts in {countdownSeconds} seconds...");
             msgServer.Items.Add($"[{DateTime.Now:HH:mm:ss}] Match countdown started");
 
-            countdownTimer = new System.Windows.Forms.Timer();
-            countdownTimer.Interval = 1000;
+            countdownTimer = new System.Windows.Forms.Timer { Interval = 1000 };
             countdownTimer.Tick += (s, ev) =>
             {
                 countdownSeconds--;
                 if (countdownSeconds > 0)
                 {
                     lblMatchStatus.Text = $"Match starts in {countdownSeconds} seconds...";
-                    if (tcpServer != null)
-                    {
-                        tcpServer.BroadcastCountdown($"Match starts in {countdownSeconds} seconds...");
-                    }
+                    tcpServer?.BroadcastCountdown($"Match starts in {countdownSeconds} seconds...");
                 }
                 else
                 {
@@ -226,15 +198,11 @@ namespace ChessGame
 
                     matchStarted = true;
                     lblMatchStatus.Text = "Match started!";
-                    
-                    if (tcpServer != null)
-                    {
-                        tcpServer.BroadcastCountdown("Match started!");
-                        tcpServer.StartMatch();  // GỌI StartMatch() để gửi [OPPONENT] và mở form Chess
-                    }
+
+                    tcpServer?.BroadcastCountdown("Match started!");
+                    tcpServer?.StartMatch();
 
                     msgServer.Items.Add($"[{DateTime.Now:HH:mm:ss}] Match started!");
-                    
                     UpdateUI();
                 }
             };
@@ -249,19 +217,13 @@ namespace ChessGame
             {
                 btnStartMatch.Enabled = false;
                 UpdateUI();
-
-                // StartMatch() sẽ được gọi SAU KHI countdown kết thúc
                 StartCountdown(5);
             }
         }
 
         private void TcpServer_OnClientConnected(string clientInfo)
         {
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() => TcpServer_OnClientConnected(clientInfo)));
-                return;
-            }
+            if (InvokeRequired) { Invoke(new Action(() => TcpServer_OnClientConnected(clientInfo))); return; }
 
             string playerName = clientInfo.Contains("(") ? clientInfo.Substring(0, clientInfo.IndexOf("(")).Trim() : clientInfo;
             string clientIp = clientInfo.Contains("(") ? clientInfo.Substring(clientInfo.IndexOf("(") + 1, clientInfo.IndexOf(")") - clientInfo.IndexOf("(") - 1) : "";
@@ -271,35 +233,20 @@ namespace ChessGame
 
         private void TcpServer_OnClientDisconnected(string clientInfo)
         {
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() => TcpServer_OnClientDisconnected(clientInfo)));
-                return;
-            }
-
+            if (InvokeRequired) { Invoke(new Action(() => TcpServer_OnClientDisconnected(clientInfo))); return; }
             RemoveClient(clientInfo);
         }
 
         private void TcpServer_OnLogMessage(string message)
         {
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() => TcpServer_OnLogMessage(message)));
-                return;
-            }
-
+            if (InvokeRequired) { Invoke(new Action(() => TcpServer_OnLogMessage(message))); return; }
             System.Diagnostics.Debug.WriteLine($"[TCP Server] {message}");
         }
 
         private void TcpServer_OnMatchShouldReset()
         {
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() => TcpServer_OnMatchShouldReset()));
-                return;
-            }
+            if (InvokeRequired) { Invoke(new Action(() => TcpServer_OnMatchShouldReset())); return; }
 
-            // Reset match state when not enough clients
             if (matchStarted)
             {
                 matchStarted = false;
@@ -311,11 +258,7 @@ namespace ChessGame
 
         private void TcpServer_OnClientPaused(string playerName, string timestamp)
         {
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() => TcpServer_OnClientPaused(playerName, timestamp)));
-                return;
-            }
+            if (InvokeRequired) { Invoke(new Action(() => TcpServer_OnClientPaused(playerName, timestamp))); return; }
 
             lblMatchStatus.Text = $"Match is paused by {playerName}";
             msgServer.Items.Add($"[{timestamp}] {playerName} đã tạm dừng ván đấu");
@@ -323,11 +266,7 @@ namespace ChessGame
 
         private void TcpServer_OnClientResumed(string playerName, string timestamp)
         {
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() => TcpServer_OnClientResumed(playerName, timestamp)));
-                return;
-            }
+            if (InvokeRequired) { Invoke(new Action(() => TcpServer_OnClientResumed(playerName, timestamp))); return; }
 
             if (matchStarted)
             {
@@ -338,18 +277,26 @@ namespace ChessGame
 
         private void TcpServer_OnClientExited(string playerName, string timestamp)
         {
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() => TcpServer_OnClientExited(playerName, timestamp)));
-                return;
-            }
-
+            if (InvokeRequired) { Invoke(new Action(() => TcpServer_OnClientExited(playerName, timestamp))); return; }
             msgServer.Items.Add($"[{timestamp}] {playerName} đã thoát ván đấu");
+        }
+
+        private void TcpServer_OnMatchEnded()
+        {
+            if (InvokeRequired) { Invoke(new Action(() => TcpServer_OnMatchEnded())); return; }
+
+            if (matchStarted)
+            {
+                matchStarted = false;
+                lblMatchStatus.Text = "Ván đấu đã kết thúc";
+                msgServer.Items.Add($"[{DateTime.Now:HH:mm:ss}] Ván đấu đã kết thúc do người chơi thoát");
+                UpdateUI();
+            }
         }
 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-
+            // No-op
         }
     }
 }

@@ -22,9 +22,10 @@ namespace ChessGame
         public event Action<string> OnClientDisconnected;
         public event Action<string> OnLogMessage;
         public event Action OnMatchShouldReset;
-        public event Action<string, string> OnClientPaused; // playerName, timestamp
+        public event Action<string, string> OnClientPaused;  // playerName, timestamp
         public event Action<string, string> OnClientResumed; // playerName, timestamp
-        public event Action<string, string> OnClientExited; // playerName, timestamp
+        public event Action<string, string> OnClientExited;  // playerName, timestamp
+        public event Action OnMatchEnded;                    // raised when a player exits
 
         private class ClientConnection
         {
@@ -45,7 +46,6 @@ namespace ChessGame
 
                 OnLogMessage?.Invoke($"Server started on port {PORT}");
 
-                // Accept clients asynchronously
                 AcceptClientsAsync();
             }
             catch (Exception ex)
@@ -61,13 +61,9 @@ namespace ChessGame
                 isListening = false;
                 OnLogMessage?.Invoke("Server is shutting down...");
 
-                // Send disconnection message to all clients first
                 BroadcastCountdown("[SERVER] Server is shutting down. Connection will be closed.");
-
-                // Give clients a moment to receive the message
                 Thread.Sleep(200);
 
-                // Disconnect all clients and trigger events
                 List<ClientConnection> clientsToDisconnect = new List<ClientConnection>();
                 lock (connectedClients)
                 {
@@ -75,23 +71,13 @@ namespace ChessGame
                     connectedClients.Clear();
                 }
 
-                // Trigger disconnect event for each client
                 foreach (var clientConn in clientsToDisconnect)
                 {
-                    try
-                    {
-                        clientConn.Writer?.Close();
-                        clientConn.Client?.Close();
-                    }
-                    catch { }
-
-                    // Trigger the disconnect event to update UI
+                    try { clientConn.Writer?.Close(); clientConn.Client?.Close(); } catch { }
                     OnClientDisconnected?.Invoke($"{clientConn.PlayerName}");
                 }
 
                 clientCount = 0;
-
-                // Close listener
                 try { tcpListener?.Stop(); } catch { }
                 OnLogMessage?.Invoke("Server stopped");
             }
@@ -110,16 +96,11 @@ namespace ChessGame
                     TcpClient client = await tcpListener.AcceptTcpClientAsync();
                     clientCount++;
                     int clientId = clientCount;
-
-                    // Get client IP address
                     string clientIp = ((IPEndPoint)client.Client.RemoteEndPoint).Address.ToString();
-
-                    // Handle client communication asynchronously
                     HandleClientAsync(client, clientId, clientIp);
                 }
                 catch (ObjectDisposedException)
                 {
-                    // Server was stopped
                     break;
                 }
                 catch (Exception ex)
@@ -147,7 +128,6 @@ namespace ChessGame
                 writer = new StreamWriter(networkStream, Encoding.UTF8) { AutoFlush = true };
                 reader = new StreamReader(networkStream, Encoding.UTF8);
 
-                // Read player name from client
                 playerName = await reader.ReadLineAsync();
                 if (playerName == null)
                 {
@@ -155,7 +135,6 @@ namespace ChessGame
                     return;
                 }
 
-                // Store client connection
                 ClientConnection clientConn = new ClientConnection
                 {
                     Id = clientId,
@@ -172,29 +151,24 @@ namespace ChessGame
 
                 OnClientConnected?.Invoke($"{playerName} ({clientIp})");
                 OnLogMessage?.Invoke($"{playerName} connected from {clientIp}");
-                
-                // Colors will be assigned when StartMatch() is called after countdown
 
-                // Listen for messages from client
                 string line;
                 while (isListening && (line = await reader.ReadLineAsync()) != null)
                 {
-                    // Check if client is disconnecting
                     if (line.Contains("[CLIENT] Disconnecting"))
                     {
                         OnLogMessage?.Invoke($"{playerName} sent disconnect signal");
                         break;
                     }
-                    
-                    // Relay MOVE messages to opponent
+
                     if (line.StartsWith("[MOVE]"))
                     {
-                        BroadcastMessage(line, clientId);
+                        BroadcastMessage(line, clientId);      // deliver move
+                        BroadcastMessage("[TURN]", clientId);   // give turn to opponent
                         OnLogMessage?.Invoke($"{playerName} moved: {line}");
                         continue;
                     }
-                    
-                    // Xử lý PAUSE message
+
                     if (line.StartsWith("[PAUSE]"))
                     {
                         string timestamp = DateTime.Now.ToString("HH:mm:ss");
@@ -203,8 +177,7 @@ namespace ChessGame
                         BroadcastMessage(line, clientId);
                         continue;
                     }
-                    
-                    // Xử lý RESUME message
+
                     if (line.StartsWith("[RESUME]"))
                     {
                         string timestamp = DateTime.Now.ToString("HH:mm:ss");
@@ -213,14 +186,14 @@ namespace ChessGame
                         BroadcastMessage(line, clientId);
                         continue;
                     }
-                    
-                    // Xử lý EXIT message
+
                     if (line.StartsWith("[EXIT]"))
                     {
                         string timestamp = DateTime.Now.ToString("HH:mm:ss");
                         OnLogMessage?.Invoke($"[{timestamp}] {playerName} exited the game");
                         OnClientExited?.Invoke(playerName, timestamp);
-                        BroadcastMessage(line, clientId);
+                        BroadcastMessage(line, clientId); // tell opponent to close
+                        OnMatchEnded?.Invoke();           // update server UI
                         continue;
                     }
 
@@ -234,12 +207,10 @@ namespace ChessGame
             }
             finally
             {
-                // Close all resources
                 try { reader?.Dispose(); } catch { }
                 try { writer?.Dispose(); } catch { }
                 try { client?.Dispose(); } catch { }
 
-                // Remove from client list and notify
                 lock (connectedClients)
                 {
                     if (connectedClients.TryGetValue(clientId, out var conn))
@@ -253,8 +224,7 @@ namespace ChessGame
                 {
                     OnClientDisconnected?.Invoke($"{playerName}");
                     OnLogMessage?.Invoke($"{playerName} disconnected. Total clients: {connectedClients.Count}");
-                    
-                    // Reset match state if less than 2 clients
+
                     if (connectedClients.Count < 2)
                     {
                         OnMatchShouldReset?.Invoke();
@@ -271,9 +241,6 @@ namespace ChessGame
             }
         }
 
-        /// <summary>
-        /// Send message to all connected clients
-        /// </summary>
         public void BroadcastCountdown(string message)
         {
             lock (connectedClients)
@@ -282,10 +249,7 @@ namespace ChessGame
                 {
                     try
                     {
-                        if (clientConn.Writer != null)
-                        {
-                            clientConn.Writer.WriteLine(message);
-                        }
+                        clientConn.Writer?.WriteLine(message);
                     }
                     catch (Exception ex)
                     {
@@ -295,33 +259,19 @@ namespace ChessGame
             }
         }
 
-        /// <summary>
-        /// Broadcast a message to all clients except the sender
-        /// </summary>
         private void BroadcastMessage(string message, int senderId)
         {
             lock (connectedClients)
             {
                 foreach (var kvp in connectedClients.ToList())
                 {
-                    if (kvp.Key != senderId)
-                    {
-                        try
-                        {
-                            if (kvp.Value.Writer != null)
-                            {
-                                kvp.Value.Writer.WriteLine(message);
-                            }
-                        }
-                        catch { }
-                    }
+                    if (kvp.Key == senderId) continue;
+
+                    try { kvp.Value.Writer?.WriteLine(message); } catch { }
                 }
             }
         }
 
-        /// <summary>
-        /// Gán màu cho 2 client khi đủ người
-        /// </summary>
         private void AssignColors()
         {
             lock (connectedClients)
@@ -329,20 +279,13 @@ namespace ChessGame
                 if (connectedClients.Count == 2)
                 {
                     var clients = connectedClients.Values.ToList();
-                    
-                    // Gán màu cho 2 client
                     clients[0].Writer.WriteLine("[OPPONENT]|" + clients[1].PlayerName + "|WHITE");
                     clients[1].Writer.WriteLine("[OPPONENT]|" + clients[0].PlayerName + "|BLACK");
-                    
                     OnLogMessage?.Invoke("Colors assigned: " + clients[0].PlayerName + " (WHITE) vs " + clients[1].PlayerName + " (BLACK)");
                 }
             }
         }
-        
-        /// <summary>
-        /// Bắt đầu match - được gọi từ ServerForm khi admin nhấn Start Match
-        /// Gửi [OPPONENT] messages để trigger clients mở chess form
-        /// </summary>
+
         public void StartMatch()
         {
             lock (connectedClients)
@@ -350,13 +293,10 @@ namespace ChessGame
                 if (connectedClients.Count == 2)
                 {
                     var clients = connectedClients.Values.ToList();
-                    
                     try
                     {
-                        // Gửi [OPPONENT] cho cả 2 client để bắt đầu game
                         clients[0].Writer.WriteLine("[OPPONENT]|" + clients[1].PlayerName + "|WHITE");
                         clients[1].Writer.WriteLine("[OPPONENT]|" + clients[0].PlayerName + "|BLACK");
-                        
                         OnLogMessage?.Invoke("Match started: " + clients[0].PlayerName + " (WHITE) vs " + clients[1].PlayerName + " (BLACK)");
                     }
                     catch (Exception ex)
