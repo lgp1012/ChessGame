@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace Client
@@ -77,6 +78,9 @@ namespace Client
                     int r = row, c = col; // Capture cho lambda
                     btn.Click += (s, e) => CellClick(r, c);
                     
+                    // Thêm custom paint để vẽ quân cờ với outline cho quân trắng
+                    btn.Paint += (s, e) => DrawChessPiece(e.Graphics, btn, r, c);
+                    
                     cells[row, col] = btn;
                     this.Controls.Add(btn);
                 }
@@ -145,12 +149,65 @@ namespace Client
                     // Lấy tọa độ hiển thị dựa trên màu quân
                     GetDisplayCoordinates(boardRow, boardCol, out int displayRow, out int displayCol);
                     
-                    ChessPiece piece = chessBoard.GetPiece(boardRow, boardCol);
-                    cells[displayRow, displayCol].Text = piece != null ? GetPieceSymbol(piece.Type, piece.Color) : "";
-                    cells[displayRow, displayCol].ForeColor = piece != null && piece.Color == PieceColor.White ? Color.White : Color.Black;
+                    // Reset text về rỗng vì sẽ vẽ custom
+                    cells[displayRow, displayCol].Text = "";
                     
                     // Reset màu nền về màu bàn cờ (dựa trên tọa độ hiển thị)
                     cells[displayRow, displayCol].BackColor = ((displayRow + displayCol) % 2 == 0) ? Color.Beige : Color.Brown;
+                    
+                    // Trigger repaint để vẽ quân cờ
+                    cells[displayRow, displayCol].Invalidate();
+                }
+            }
+        }
+
+        private void DrawChessPiece(Graphics g, Button btn, int displayRow, int displayCol)
+        {
+            // Chuyển đổi từ tọa độ hiển thị sang tọa độ bàn cờ
+            GetBoardCoordinates(displayRow, displayCol, out int boardRow, out int boardCol);
+            
+            ChessPiece piece = chessBoard.GetPiece(boardRow, boardCol);
+            if (piece == null) return;
+
+            string symbol = GetPieceSymbol(piece.Type, piece.Color);
+            if (string.IsNullOrEmpty(symbol)) return;
+
+            // Cài đặt font và vị trí
+            Font font = new Font("Arial", 28, FontStyle.Regular);
+            SizeF textSize = g.MeasureString(symbol, font);
+            float x = (btn.Width - textSize.Width) / 2;
+            float y = (btn.Height - textSize.Height) / 2;
+
+            // Vẽ quân cờ
+            if (piece.Color == PieceColor.White)
+            {
+                // Quân trắng: Vẽ outline đen trước, sau đó fill trắng
+                using (GraphicsPath path = new GraphicsPath())
+                {
+                    path.AddString(symbol, font.FontFamily, (int)FontStyle.Regular, 
+                        g.DpiY * font.Size / 72, new PointF(x, y), StringFormat.GenericDefault);
+                    
+                    // Vẽ outline đen (stroke)
+                    using (Pen outlinePen = new Pen(Color.Black, 3))
+                    {
+                        g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                        g.DrawPath(outlinePen, path);
+                    }
+                    
+                    // Fill màu trắng
+                    using (SolidBrush fillBrush = new SolidBrush(Color.White))
+                    {
+                        g.FillPath(fillBrush, path);
+                    }
+                }
+            }
+            else
+            {
+                // Quân đen: Vẽ solid đen
+                using (SolidBrush brush = new SolidBrush(Color.Black))
+                {
+                    g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                    g.DrawString(symbol, font, brush, x, y);
                 }
             }
         }
@@ -504,6 +561,9 @@ namespace Client
                 }
             }
             
+            // Disable nút Pause vì đối phương đã pause
+            btnPause.Enabled = false;
+            
             UpdateTurnDisplay();
         }
 
@@ -572,6 +632,9 @@ namespace Client
                         btn.Enabled = true;
                 }
             }
+            
+            // Enable lại nút Pause vì đối phương đã resume
+            btnPause.Enabled = true;
             
             UpdateTurnDisplay();
         }
