@@ -58,40 +58,24 @@ A complete multiplayer chess game built with C# .NET Framework 4.8, featuring re
 
 ## 🎮 How to Play
 
-### Starting a Game
+  ### Starting a Game
 1. **White player** sees: "Your Turn" (green)
 2. **Black player** sees: "Bob's Turn" (blue)
 
-### Making a Move
+  ### Making a Move
 1. Click your piece (highlights in **Gold**)
 2. Valid moves show in **Light Green** or **Indian Red** (enemy)
 3. Click destination to move
 4. Move transmits via UDP to opponent
 5. Turn switches automatically
 
-### Game Controls
+  ### Game Controls
 - **Pause**: Temporarily pause the game
 - **Exit**: Quit and end the match
 
-### Winning
+  ### Winning
 - Checkmate opponent's king
 - Game automatically detects and announces winner
-
-## 🏗️ Architecture
-
-```
-┌─────────────┐           TCP            ┌─────────────┐
-│  Client A   │ ◄──────────────────────► │ TCP Server  │
-│   (White)   │      Port 5000           │ (Matching)  │
-└─────────────┘                          └─────────────┘
-       │                                        │
-       │ UDP Direct (Dynamic Port)             │ TCP
-       ▼                                        ▼
-┌─────────────┐                          ┌─────────────┐
-│ UdpClient A │ ◄──────────────────────► │  Client B   │
-└─────────────┘      UDP P2P             │   (Black)   │
-                                          └─────────────┘
-```
 
 ### Communication Flow
 1. **TCP**: Initial connection, matchmaking, opponent info
@@ -99,8 +83,8 @@ A complete multiplayer chess game built with C# .NET Framework 4.8, featuring re
 3. **UDP Gameplay**: Direct peer-to-peer move transmission
 4. **TCP Control**: Pause, exit, server commands
 
-## 🧩 Project Structure
 
+## 🧩 Project Structure
 ```
 ChessGame/
 ├── Client/                         # Client Application
@@ -118,29 +102,29 @@ ChessGame/
 ```
 
 ## 🔧 Key Components
-
-### ChessBoard.cs
+...
+  ### ChessBoard.cs
 Complete chess engine with:
 - Move validation for all piece types
 - Check/checkmate detection
 - Path blocking analysis
 - Safe move verification (prevents self-check)
 
-### ChessGameForm.cs
+  ### ChessGameForm.cs
 Interactive game UI featuring:
 - 8×8 button grid
 - Unicode piece symbols
 - Move highlighting system
 - Real-time board updates
 
-### UdpGameClient.cs
+  ### UdpGameClient.cs
 Peer-to-peer game communication:
 - Dynamic port assignment
 - Asynchronous message receiving
 - Event-based architecture
 - Move serialization (format: `r1,c1->r2,c2`)
 
-### TcpServer.cs
+  ### TcpServer.cs
 Server coordination:
 - Client matchmaking (pairs of 2)
 - Color assignment (White/Black)
