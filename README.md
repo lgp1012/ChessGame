@@ -1,15 +1,6 @@
-# Chess Game with UDP Communication
+# Chess Game with TCP/UDP Communication
 
 A complete multiplayer chess game built with C# .NET Framework 4.8, featuring real-time gameplay over UDP for fast move transmission and TCP for reliable server coordination.
-
-## 🎯 Features
-
-### Complete Chess Logic
-- ✅ Full move validation for all chess pieces
-- ✅ Check and checkmate detection
-- ✅ Legal move enforcement (prevents self-check)
-- ✅ Path blocking detection (bishops, rooks, queens)
-- ✅ Special pawn rules (double move from start, diagonal capture)
 
 ### Interactive UI
 - 🎨 Button-based chessboard with **Beige & Brown** squares
@@ -47,32 +38,23 @@ A complete multiplayer chess game built with C# .NET Framework 4.8, featuring re
 
 3. **Build both projects**
    - Right-click Solution → Build Solution (Ctrl+Shift+B)
-   - Ensure both `Client` and `ChessGame` build successfully
+   - Ensure both `Client` and `Server` build successfully
 
 4. **Start the server**
-   - Run `ChessGame` project
+   - Run `Server` project
    - Click **"Start Server"** button
    - Server listens on **port 5000**
 
 5. **Connect clients**
    - Run `Client` project (start 2 instances)
    - Enter player name
-   - Enter server IP: `127.0.0.1` (for localhost)
+   - Enter server IP: IP's Server
    - Click **"Connect"**
 
 6. **Play chess!**
-   - Server auto-matches when 2 clients connect
+   - Server start-matches when 2 clients connect
    - White player goes first
    - Click pieces and valid squares to move
-
-## 📖 Documentation
-
-| Document | Description |
-|----------|-------------|
-| [IMPLEMENTATION_NOTES.md](IMPLEMENTATION_NOTES.md) | Detailed implementation guide and technical specs |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | System architecture, diagrams, and data flow |
-| [TESTING_CHECKLIST.md](TESTING_CHECKLIST.md) | Comprehensive 22-point test suite |
-| [QUICK_REFERENCE.md](QUICK_REFERENCE.md) | Developer quick reference and code examples |
 
 ## 🎮 How to Play
 
@@ -128,15 +110,11 @@ ChessGame/
 │   ├── ClientForm.cs              # Connection UI
 │   ├── TcpClient.cs               # TCP server connection
 │   └── Client.csproj              # Client project
-├── ChessGame/                      # Server Application
-│   ├── TcpServer.cs               # TCP server & UDP coordination
-│   ├── ServerForm.cs              # Server UI
-│   └── Server.csproj              # Server project
-└── Documentation/
-    ├── IMPLEMENTATION_NOTES.md
-    ├── ARCHITECTURE.md
-    ├── TESTING_CHECKLIST.md
-    └── QUICK_REFERENCE.md
+├── ChessGame(Server)/                      # Server Application
+   ├── TcpServer.cs               # TCP server & UDP coordination
+   ├── ServerForm.cs              # Server UI
+   └── Server.csproj              # Server project
+
 ```
 
 ## 🔧 Key Components
@@ -187,52 +165,11 @@ Server coordination:
 - ❌ Stalemate detection
 - ❌ Draw by repetition
 
-## 🛡️ Security Notes
-
-**Current implementation:**
-- Moves validated on both sides (anti-cheat)
-- No encryption (local network recommended)
-- No authentication (trust-based)
-
-**For production use, add:**
-- TLS/SSL encryption
-- Player authentication
-- Message signing
-- Rate limiting
-
-## 🐛 Known Limitations
-
-- Requires Windows (no Linux/macOS support)
-- .NET Framework 4.8 dependency
-- Exactly 2 players required (no AI)
-- No game history or replay
-- No save/load functionality
-- UDP ports dynamically assigned (firewall may block)
-
-## 🎯 Testing
-
-Run through the [TESTING_CHECKLIST.md](TESTING_CHECKLIST.md) for comprehensive validation:
-- 22 functional tests
-- Build verification
-- Network resilience tests
-- Edge case handling
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
-## 📝 License
-
-This project is open source and available under standard terms.
-
 ## 👤 Author
 
-**lgp1012**
-- GitHub: [@lgp1012](https://github.com/lgp1012)
+Member:
+- Lưu Gia Phúc - GitHub: [@lgp1012](https://github.com/lgp1012)
+- Nguyễn Huỳnh Nghĩa Nhân
 
 ## 🙏 Acknowledgments
 
