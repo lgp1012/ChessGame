@@ -17,14 +17,12 @@ namespace Client
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            // Show player name and server IP input dialog first
+            // Mở form để nhập tên người chơi và địa chỉ IP máy chủ
             PlayerNameForm playerNameForm = new PlayerNameForm();
             if (playerNameForm.ShowDialog() == DialogResult.OK)
             {
-                // If player entered name and server IP, show the main client form
                 Application.Run(new ClientForm(playerNameForm.PlayerName, playerNameForm.ServerIP));
             }
-            // If cancelled, exit application
         }
     }
 }

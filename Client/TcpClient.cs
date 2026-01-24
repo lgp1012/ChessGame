@@ -48,8 +48,6 @@ namespace Client
                 await tcpClient.ConnectAsync(serverIP, SERVER_PORT);
                 
                 stream = tcpClient.GetStream();
-                // Loại bỏ ReadTimeout để stream không bị timeout
-                // stream.ReadTimeout = 5000;
                 
                 writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
                 isConnected = true;
@@ -83,7 +81,7 @@ namespace Client
                 
                 while (isConnected && (line = await reader.ReadLineAsync()) != null)
                 {
-                    // Check if server is shutting down
+                    // Kiểm tra nếu server gửi tín hiệu đóng kết nối
                     if (line.Contains("[SERVER] Server is shutting down"))
                     {
                         OnMessageReceived?.Invoke(line);
@@ -91,11 +89,10 @@ namespace Client
                         break;
                     }
 
-                    // Trigger event for received message
+                    // Nhận tin nhắn từ server
                     OnMessageReceived?.Invoke(line);
                 }
 
-                // If loop exits naturally (server closed connection)
                 if (isConnected)
                 {
                     Disconnect();
@@ -117,10 +114,6 @@ namespace Client
                 try { reader?.Dispose(); } catch { }
             }
         }
-
-        /// <summary>
-        /// Send message to server
-        /// </summary>
         public void SendMessage(string message)
         {
             try
@@ -144,9 +137,6 @@ namespace Client
             }
         }
 
-        /// <summary>
-        /// Disconnect from server
-        /// </summary>
         public void Disconnect()
         {
             if (!isConnected)
@@ -156,7 +146,7 @@ namespace Client
 
             try
             {
-                // Try to send disconnect signal
+                // Gửi tin nhắn ngắt kết nối đến server
                 if (writer != null)
                 {
                     try

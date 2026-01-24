@@ -316,6 +316,7 @@ namespace ChessGame
         {
             lock (connectedClients)
             {
+                //kvp: KeyValuePair - Key là clientId, Value là ClientConnection
                 foreach (var kvp in connectedClients.ToList())
                 {
                     if (kvp.Key != senderId)
