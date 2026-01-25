@@ -49,8 +49,8 @@ namespace Client
             }
         }
 
-        // Gửi nước đi: format "r1,c1->r2,c2"
-        public void SendMove(int r1, int c1, int r2, int c2)
+        // Gửi nước đi theo format "rowBefore,columnBefore->rowAfter,columnAfter"
+        public void SendMove(int rowBefore, int columnBefore, int rowAfter, int columnAfter)
         {
             try
             {
@@ -60,7 +60,7 @@ namespace Client
                     return;
                 }
 
-                string moveData = $"{r1},{c1}->{r2},{c2}";
+                string moveData = $"{rowBefore},{columnBefore}->{rowAfter},{columnAfter}";
                 byte[] data = Encoding.UTF8.GetBytes(moveData);
                 udpClient.Send(data, data.Length, opponentEndPoint);
             }

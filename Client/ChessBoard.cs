@@ -45,7 +45,7 @@ namespace Client
 
         private void InitializeBoard()
         {
-            // Initialize empty board
+            // Khởi tạo bảng trống
             for (int row = 0; row < BOARD_SIZE; row++)
             {
                 for (int col = 0; col < BOARD_SIZE; col++)
@@ -54,7 +54,7 @@ namespace Client
                 }
             }
 
-            // Set up white pieces (bottom)
+            // Setup quân cờ trắng 
             board[7, 0] = new ChessPiece(PieceType.Rook, PieceColor.White);
             board[7, 1] = new ChessPiece(PieceType.Knight, PieceColor.White);
             board[7, 2] = new ChessPiece(PieceType.Bishop, PieceColor.White);
@@ -64,13 +64,13 @@ namespace Client
             board[7, 6] = new ChessPiece(PieceType.Knight, PieceColor.White);
             board[7, 7] = new ChessPiece(PieceType.Rook, PieceColor.White);
 
-            // White pawns
+            // Quân tốt trắng
             for (int col = 0; col < BOARD_SIZE; col++)
             {
                 board[6, col] = new ChessPiece(PieceType.Pawn, PieceColor.White);
             }
 
-            // Set up black pieces (top)
+            // Setup quân cờ đen
             board[0, 0] = new ChessPiece(PieceType.Rook, PieceColor.Black);
             board[0, 1] = new ChessPiece(PieceType.Knight, PieceColor.Black);
             board[0, 2] = new ChessPiece(PieceType.Bishop, PieceColor.Black);
@@ -80,7 +80,7 @@ namespace Client
             board[0, 6] = new ChessPiece(PieceType.Knight, PieceColor.Black);
             board[0, 7] = new ChessPiece(PieceType.Rook, PieceColor.Black);
 
-            // Black pawns
+            // Quân tốt đen
             for (int col = 0; col < BOARD_SIZE; col++)
             {
                 board[1, col] = new ChessPiece(PieceType.Pawn, PieceColor.Black);
@@ -114,21 +114,21 @@ namespace Client
         }
 
         // Kiểm tra có trong bàn cờ không
-        public bool InBoard(int r, int c)
+        public bool InBoard(int row, int column)
         {
-            return r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE;
+            return row >= 0 && row < BOARD_SIZE && column >= 0 && column < BOARD_SIZE;
         }
 
         // Kiểm tra đường đi không bị chặn
-        public bool ClearPath(int r1, int c1, int r2, int c2)
+        public bool ClearPath(int rowBefore, int columnBefore, int rowAfter, int columnAfter)
         {
-            int rowDir = Math.Sign(r2 - r1);
-            int colDir = Math.Sign(c2 - c1);
+            int rowDir = Math.Sign(rowAfter - rowBefore);
+            int colDir = Math.Sign(columnAfter - columnBefore);
             
-            int currentRow = r1 + rowDir;
-            int currentCol = c1 + colDir;
+            int currentRow = rowBefore + rowDir;
+            int currentCol = columnBefore + colDir;
             
-            while (currentRow != r2 || currentCol != c2)
+            while (currentRow != rowAfter || currentCol != columnAfter)
             {
                 if (board[currentRow, currentCol] != null)
                     return false;
@@ -141,58 +141,56 @@ namespace Client
         }
 
         // Kiểm tra nước đi của Tốt (Pawn)
-        bool PawnMove(ChessPiece p, int r1, int c1, int r2, int c2)
+        bool PawnMove(ChessPiece p, int rowBefore, int columnBefore, int rowAfter, int columnAfter)
         {
             int direction = (p.Color == PieceColor.White) ? -1 : 1;
             int startRow = (p.Color == PieceColor.White) ? 6 : 1;
             
             // Di chuyển thẳng 1 ô
-            if (c1 == c2 && r2 == r1 + direction && board[r2, c2] == null)
+            if (columnBefore == columnAfter && rowAfter == rowBefore + direction && board[rowAfter, columnAfter] == null)
                 return true;
             
             // Di chuyển thẳng 2 ô từ vị trí ban đầu
-            if (c1 == c2 && r1 == startRow && r2 == r1 + 2 * direction && 
-                board[r2, c2] == null && board[r1 + direction, c1] == null)
+            if (columnBefore == columnAfter && rowBefore == startRow && rowAfter == rowBefore + 2 * direction && board[rowAfter, columnAfter] == null && board[rowBefore + direction, columnBefore] == null)
                 return true;
             
             // Ăn chéo
-            if (Math.Abs(c2 - c1) == 1 && r2 == r1 + direction && 
-                board[r2, c2] != null && board[r2, c2].Color != p.Color)
+            if (Math.Abs(columnAfter - columnBefore) == 1 && rowAfter == rowBefore + direction && 
+                board[rowAfter, columnAfter] != null && board[rowAfter, columnAfter].Color != p.Color)
                 return true;
             
             return false;
         }
 
         // Kiểm tra nước đi cơ bản theo từng loại quân
-        bool BasicMove(ChessPiece p, int r1, int c1, int r2, int c2)
+        bool BasicMove(ChessPiece p, int rowBefore, int columnBefore, int rowAfter, int columnAfter)
         {
             switch (p.Type)
             {
                 case PieceType.Pawn:
-                    return PawnMove(p, r1, c1, r2, c2);
+                    return PawnMove(p, rowBefore, columnBefore, rowAfter, columnAfter);
                 
                 case PieceType.Rook:
                     // Xe đi ngang hoặc dọc
-                    return (r1 == r2 || c1 == c2) && ClearPath(r1, c1, r2, c2);
+                    return (rowBefore == rowAfter || columnBefore == columnAfter) && ClearPath(rowBefore, columnBefore, rowAfter, columnAfter);
                 
                 case PieceType.Knight:
                     // Mã đi hình chữ L
-                    int dr = Math.Abs(r2 - r1);
-                    int dc = Math.Abs(c2 - c1);
+                    int dr = Math.Abs(rowAfter - rowBefore);
+                    int dc = Math.Abs(columnAfter - columnBefore);
                     return (dr == 2 && dc == 1) || (dr == 1 && dc == 2);
                 
                 case PieceType.Bishop:
                     // Tượng đi chéo
-                    return Math.Abs(r2 - r1) == Math.Abs(c2 - c1) && ClearPath(r1, c1, r2, c2);
+                    return Math.Abs(rowAfter - rowBefore) == Math.Abs(columnAfter - columnBefore) && ClearPath(rowBefore, columnBefore, rowAfter, columnAfter);
                 
                 case PieceType.Queen:
                     // Hậu = Xe + Tượng
-                    return ((r1 == r2 || c1 == c2) || (Math.Abs(r2 - r1) == Math.Abs(c2 - c1))) && 
-                           ClearPath(r1, c1, r2, c2);
-                
+                    return ((rowBefore == rowAfter || columnBefore == columnAfter) || (Math.Abs(rowAfter - rowBefore) == Math.Abs(columnAfter - columnBefore))) && ClearPath(rowBefore, columnBefore, rowAfter, columnAfter);
+
                 case PieceType.King:
                     // Vua đi 1 ô theo mọi hướng
-                    return Math.Abs(r2 - r1) <= 1 && Math.Abs(c2 - c1) <= 1;
+                    return Math.Abs(rowAfter - rowBefore) <= 1 && Math.Abs(columnAfter - columnBefore) <= 1;
                 
                 default:
                     return false;

@@ -120,7 +120,7 @@ namespace ChessGame
                 System.Diagnostics.Debug.WriteLine("[SERVER] [STOPMATCH] broadcast completed");
             }
 
-            // Đợi 1 chút để clients nhận message
+            // Đợi để đảm bảo clients nhận message
             System.Threading.Thread.Sleep(200);
 
             matchStarted = false;
@@ -211,8 +211,6 @@ namespace ChessGame
                 tcpServer.BroadcastCountdown($"Match starts in {countdownSeconds} seconds...");
             }
 
-            msgServer.Items.Add($"[{DateTime.Now:HH:mm:ss}] Match countdown started");
-
             countdownTimer = new System.Windows.Forms.Timer();
             countdownTimer.Interval = 1000;
             countdownTimer.Tick += (s, ev) =>
@@ -232,7 +230,7 @@ namespace ChessGame
                     countdownTimer.Dispose();
                     countdownTimer = null;
 
-                    matchStarted = true;  // Set matchStarted = true khi match bắt đầu
+                    matchStarted = true;
                     lblMatchStatus.Text = "Match started!";
                     
                     if (tcpServer != null)
@@ -300,7 +298,7 @@ namespace ChessGame
                 return;
             }
 
-            System.Diagnostics.Debug.WriteLine($"[TCP Server] {message}");
+            System.Diagnostics.Debug.WriteLine($"[TCP SERVER] {message}");
         }
 
         private void TcpServer_OnMatchShouldReset()
@@ -311,7 +309,7 @@ namespace ChessGame
                 return;
             }
 
-            // Reset match state when not enough clients
+            // Reset lại trang thái match nếu đang bắt đầu
             if (matchStarted)
             {
                 matchStarted = false;

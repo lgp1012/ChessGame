@@ -25,9 +25,7 @@ namespace Client
 
         public bool IsConnected => isConnected;
 
-        /// <summary>
-        /// Constructor - IP server bắt buộc phải cung cấp
-        /// </summary>
+        // Constructor - IP server bắt buộc phải cung cấp
         public TcpClientConnection(string ip)
         {
             if (string.IsNullOrWhiteSpace(ip))
@@ -36,9 +34,7 @@ namespace Client
             serverIP = ip;
         }
 
-        /// <summary>
-        /// Connect to server and send player name
-        /// </summary>
+        // Kết nối đến server
         public async Task ConnectAsync(string playerName)
         {
             try
@@ -52,12 +48,11 @@ namespace Client
                 writer = new StreamWriter(stream, Encoding.UTF8) { AutoFlush = true };
                 isConnected = true;
 
-                // Send player name to server
+                // Gửi tên người chơi đến server
                 await writer.WriteLineAsync(playerName);
 
                 OnConnectionStatusChanged?.Invoke("Connected");
 
-                // Start listening for messages from server
                 ListenToServerAsync();
             }
             catch (Exception ex)
@@ -69,9 +64,7 @@ namespace Client
             }
         }
 
-        /// <summary>
-        /// Listen to incoming messages from server asynchronously
-        /// </summary>
+        // Lắng nghe đến server
         private async void ListenToServerAsync()
         {
             try
@@ -93,6 +86,7 @@ namespace Client
                     OnMessageReceived?.Invoke(line);
                 }
 
+                //Client vẫn kết nối nhưng server đã ngắt kết nối (line == null) thì sẽ ngắt kết nối của client
                 if (isConnected)
                 {
                     Disconnect();

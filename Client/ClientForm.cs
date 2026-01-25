@@ -121,14 +121,14 @@ namespace Client
                 }
                 inGame = false;
                 
-                // Cleanup UDP client
+                // Ngát kết nối UDP client
                 if (udpClient != null)
                 {
                     udpClient.Stop();
                     udpClient = null;
                 }
             }
-            // Server stopped match - PHẢI XỬ LÝ ĐÚNG
+            // Server stopped match
             else if (message.Contains("[STOPMATCH]"))
             {
                 System.Diagnostics.Debug.WriteLine("[CLIENT] Received STOPMATCH message!");
@@ -171,9 +171,6 @@ namespace Client
             if (gameForm != null && !gameForm.IsDisposed && inGame)
             {
                 System.Diagnostics.Debug.WriteLine("[CLIENT] Calling GameStoppedByServer on gameForm");
-                // Gọi phương thức có sẵn trong ChessGameForm
-                // GameStoppedByServer sẽ tự động trigger OnGameExited event
-                // OnGameExited event handler sẽ lo việc cleanup và show ClientForm
                 gameForm.GameStoppedByServer();
             }
             else

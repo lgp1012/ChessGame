@@ -14,9 +14,9 @@ namespace Client
         private bool isMyTurn;
         private int squareSize = 60;
         private bool isPaused = false;
-        private bool isPausedByMe = false; // Track if I initiated the pause
-        private bool isBlockedByOpponent = false; // Track if opponent paused the game
-        private bool gameExitedTriggered = false; // Flag để tránh trigger OnGameExited event 2 lần
+        private bool isPausedByMe = false;
+        private bool isBlockedByOpponent = false; 
+        private bool gameExitedTriggered = false;
         private Button[,] cells;
         private int selectedRow = -1;
         private int selectedCol = -1;
@@ -39,8 +39,8 @@ namespace Client
             
             int boardSize = ChessBoard.BOARD_SIZE * squareSize;
             this.ClientSize = new Size(boardSize + 40, boardSize + 100);
-            
-            // Position and size the pause overlay to cover the chess board area
+
+            // Vi trí và kích thước overlay pause
             pauseOverlay.Location = new Point(20, 50);
             pauseOverlay.Size = new Size(boardSize, boardSize);
             
@@ -75,7 +75,7 @@ namespace Client
                     // Màu bàn cờ: Beige/Brown
                     btn.BackColor = ((row + col) % 2 == 0) ? Color.Beige : Color.Brown;
                     
-                    int r = row, c = col; // Capture cho lambda
+                    int r = row, c = col;
                     btn.Click += (s, e) => CellClick(r, c);
                     
                     // Thêm custom paint để vẽ quân cờ với outline cho quân trắng
@@ -379,8 +379,8 @@ namespace Client
                     int c1 = int.Parse(from[1]);
                     int r2 = int.Parse(to[0]);
                     int c2 = int.Parse(to[1]);
-                    
-                    // Validate opponent's move before accepting it
+
+                    // Xác thực nước đi đối thủ
                     PieceColor opponentColor = (playerColor == PieceColor.White) ? PieceColor.Black : PieceColor.White;
                     ChessPiece movingPiece = chessBoard.GetPiece(r1, c1);
                     
@@ -407,7 +407,7 @@ namespace Client
                     // Kiểm tra chiếu bí
                     if (chessBoard.IsCheckmate(playerColor))
                     {
-                        MessageBox.Show("Checkmate! Bạn đã thua!", "Game Over", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("Checkmate! You lose!", "Game Over", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
             }
@@ -460,8 +460,8 @@ namespace Client
         {
             if (!isPausedByMe)
             {
-                // Currently not paused by me, show pause dialog
-                DialogResult result = MessageBox.Show("Bạn muốn tạm dừng ván đấu?", "Pause", 
+                // Hiển thị hộp thoại xác nhận pause 
+                DialogResult result = MessageBox.Show("Would you like to pause this match?", "Pause", 
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
                 if (result == DialogResult.Yes)
@@ -512,7 +512,7 @@ namespace Client
 
         private void btnExit_Click(object sender, EventArgs e)
         {
-            DialogResult result = MessageBox.Show("Bạn chắc chắn muốn thoát?", "Exit Game",
+            DialogResult result = MessageBox.Show("Are you sure you want to exit?", "Exit Game",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (result == DialogResult.Yes)
@@ -579,7 +579,7 @@ namespace Client
             pauseOverlay.Visible = true;
             pauseOverlay.BringToFront();
             
-            // Disable all cell buttons
+            // Disable toàn bộ bàn cờ
             if (cells != null)
             {
                 foreach (var btn in cells)
@@ -600,7 +600,7 @@ namespace Client
 
             pauseOverlay.Visible = false;
             
-            // Enable all cell buttons
+            // Enable bàn cờ
             if (cells != null)
             {
                 foreach (var btn in cells)
@@ -623,7 +623,6 @@ namespace Client
             isBlockedByOpponent = false;
             pauseOverlay.Visible = false;
             
-            // Enable all cell buttons
             if (cells != null)
             {
                 foreach (var btn in cells)
@@ -688,8 +687,8 @@ namespace Client
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             base.OnFormClosing(e);
-            
-            // Chỉ trigger OnGameExited nếu chưa được trigger
+
+            // Chỉ thuc hiện OnGameExited một lần duy nhất
             if (!gameExitedTriggered)
             {
                 System.Diagnostics.Debug.WriteLine("[ChessGameForm] OnFormClosing - triggering OnGameExited");

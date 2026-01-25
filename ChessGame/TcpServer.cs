@@ -281,14 +281,12 @@ namespace ChessGame
             }
         }
 
-        /// <summary>
-        /// Gửi message đến tất cả clients (dùng cho countdown)
-        /// </summary>
+        // Gửi message đến tất cả clients (dùng cho countdown)
         public void BroadcastCountdown(string message)
         {
             lock (connectedClients)
             {
-                System.Diagnostics.Debug.WriteLine($"[TcpServer] Broadcasting: '{message}' to {connectedClients.Count} clients");
+                System.Diagnostics.Debug.WriteLine($"[TCP SERVER] Broadcasting: '{message}' to {connectedClients.Count} clients");
                 foreach (var clientConn in connectedClients.Values.ToList())
                 {
                     try
@@ -297,7 +295,7 @@ namespace ChessGame
                         {
                             clientConn.Writer.WriteLine(message);
                             clientConn.Writer.Flush();
-                            System.Diagnostics.Debug.WriteLine($"[TcpServer] Sent to {clientConn.PlayerName}");
+                            System.Diagnostics.Debug.WriteLine($"[TCP SERVER] Sent to {clientConn.PlayerName}");
                         }
                     }
                     catch (Exception ex)
@@ -305,13 +303,11 @@ namespace ChessGame
                         OnLogMessage?.Invoke($"Error sending to {clientConn.PlayerName}: {ex.Message}");
                     }
                 }
-                System.Diagnostics.Debug.WriteLine($"[TcpServer] Broadcast completed");
+                System.Diagnostics.Debug.WriteLine($"[TCP SERVER Broadcast completed");
             }
         }
 
-        /// <summary>
-        /// Gửi message đến tất cả clients trừ sender
-        /// </summary>
+        // Gửi message đến tất cả clients trừ sender
         private void BroadcastMessage(string message, int senderId)
         {
             lock (connectedClients)
@@ -334,14 +330,12 @@ namespace ChessGame
             }
         }
 
-        /// <summary>
-        /// Gửi message qua UDP trực tiếp đến tất cả clients (dùng cho STOPMATCH để đảm bảo nhận nhanh)
-        /// </summary>
+        // Gửi message qua UDP trực tiếp đến tất cả clients (dùng cho STOPMATCH để đảm bảo nhận nhanh)
         public void BroadcastUdpMessage(string message)
         {
             lock (connectedClients)
             {
-                System.Diagnostics.Debug.WriteLine($"[TcpServer] Broadcasting UDP: '{message}' to {connectedClients.Count} clients");
+                System.Diagnostics.Debug.WriteLine($"[TCP Server] Broadcasting UDP: '{message}' to {connectedClients.Count} clients");
                 
                 using (UdpClient udpSender = new UdpClient())
                 {
@@ -355,28 +349,26 @@ namespace ChessGame
                             {
                                 IPEndPoint endpoint = new IPEndPoint(IPAddress.Parse(clientConn.IpAddress), clientConn.UdpPort);
                                 udpSender.Send(data, data.Length, endpoint);
-                                System.Diagnostics.Debug.WriteLine($"[TcpServer] Sent UDP to {clientConn.PlayerName} at {clientConn.IpAddress}:{clientConn.UdpPort}");
+                                System.Diagnostics.Debug.WriteLine($"[TCP Server] Sent UDP to {clientConn.PlayerName} at {clientConn.IpAddress}:{clientConn.UdpPort}");
                             }
                             else
                             {
-                                System.Diagnostics.Debug.WriteLine($"[TcpServer] Cannot send UDP to {clientConn.PlayerName} - no UDP port info");
+                                System.Diagnostics.Debug.WriteLine($"[TCP Server] Cannot send UDP to {clientConn.PlayerName} - no UDP port info");
                             }
                         }
                         catch (Exception ex)
                         {
-                            System.Diagnostics.Debug.WriteLine($"[TcpServer] Exception sending UDP to {clientConn.PlayerName}: {ex.Message}");
+                            System.Diagnostics.Debug.WriteLine($"[TCP Server] Exception sending UDP to {clientConn.PlayerName}: {ex.Message}");
                             OnLogMessage?.Invoke($"Error sending UDP to {clientConn.PlayerName}: {ex.Message}");
                         }
                     }
                 }
                 
-                System.Diagnostics.Debug.WriteLine($"[TcpServer] UDP Broadcast completed");
+                System.Diagnostics.Debug.WriteLine($"[TCP Server] UDP Broadcast completed");
             }
         }
 
-        /// <summary>
-        /// Gán màu cho 2 client khi đủ người
-        /// </summary>
+        // Gán màu cho 2 client khi đủ người
         private void AssignColors()
         {
             lock (connectedClients)
@@ -394,9 +386,7 @@ namespace ChessGame
             }
         }
         
-        /// <summary>
-        /// Bắt đầu match - được gọi từ ServerForm khi admin nhấn Start Match
-        /// </summary>
+        // Bắt đầu match - được gọi từ ServerForm khi admin nhấn Start Match
         public void StartMatch()
         {
             lock (connectedClients)
@@ -409,9 +399,7 @@ namespace ChessGame
             }
         }
 
-        /// <summary>
-        /// Kiểm tra và trao đổi thông tin UDP khi cả 2 client đã gửi port
-        /// </summary>
+        // Kiểm tra và trao đổi thông tin UDP khi cả 2 client đã gửi port
         private void CheckAndExchangeUdpInfo()
         {
             lock (connectedClients)
